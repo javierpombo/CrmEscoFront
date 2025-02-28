@@ -1,0 +1,11 @@
+.tableHeaderCell {
+    background-color: var(--neutral-neutral-200);
+    border-bottom: 1px solid var(--neutral-neutral-300);
+    padding: var(--padding-xs) var(--padding-base);
+    text-align: left;
+    font-weight: 500;
+    line-height: var(--global-tokens-body-b-6-size);
+    font-size: var(--global-tokens-body-b-6-size);
+    color: var(--neutral-neutral-1100);
+    white-space: nowrap;
+  }

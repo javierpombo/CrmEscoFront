@@ -1,0 +1,127 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Work Sans:wght@400&display=swap");
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+
+body {
+  margin: 0;
+  line-height: normal;
+}
+
+body {
+  font-family: 'Work Sans', sans-serif;
+  background-color: #f5f5f5;
+}
+
+.table-container {
+  width: 100%;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  background-color: #f3f3f3;
+  color: #333;
+  font-weight: 500;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e7e7e7;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #e7e7e7;
+  color: #4a4a4a;
+}
+
+.table-empty-state {
+  text-align: center;
+  color: #777;
+  padding: 20px;
+}
+:root {
+  /* Fonts */
+  --global-tokens-headings-h-7: Roboto;
+  --font-work-sans: "Work Sans";
+
+  /* font sizes */
+  --global-tokens-body-b-6-size: 12px;
+  --global-tokens-body-b-4-size: 14px;
+  --global-tokens-body-b-1-size: 16px;
+  --global-tokens-headings-h-7-size: 18px;
+  --font-size-lgi: 19px;
+  --global-tokens-headings-h-6-size: 24px;
+  --global-tokens-headings-h-4-size: 28px;
+
+  /* Colors */
+  --color-dodgerblue: rgba(8, 133, 230, 0.1);
+
+  /* Gaps */
+  --gap-9xs: 4px;
+  --gap-5xs: 8px;
+  --gap-xs: 12px;
+  --gap-base: 16px;
+  --gap-xl: 20px;
+  --gap-5xl: 24px;
+
+  /* Paddings */
+  --padding-11xs: 2px;
+  --padding-5xs: 8px;
+  --padding-3xs: 10px;
+  --padding-xs: 12px;
+  --padding-sm: 14px;
+  --padding-mini: 15px;
+  --padding-base: 16px;
+  --padding-lg: 18px;
+  --padding-lgi: 19px;
+  --padding-xl: 20px;
+  --padding-5xl: 24px;
+  --padding-6xl: 25px;
+  --padding-6xl-5: 25.5px;
+  --padding-13xl: 32px;
+
+  /* Border radiuses */
+  --br-7xs: 6px;
+  --br-5xs: 8px;
+  --br-base: 16px;
+  --br-xl: 20px;
+  --br-181xl: 200px;
+
+  /* Effects */
+  --shadow-lg: 0px 12px 16px -4px rgba(10, 13, 18, 0.08),
+    0px 4px 6px -2px rgba(10, 13, 18, 0.03);
+
+  /* Figma Variables */
+
+  /* Color Variables */
+  --neutral-neutral-100: #fefefe;
+  --neutral-neutral-1000: #4a4a4a;
+  --neutral-neutral-1100: #333;
+  --neutral-neutral-200: #f3f3f3;
+  --neutral-neutral-300: #e7e7e7;
+  --neutral-neutral-500: #bababa;
+  --neutral-neutral-900: #606060;
+  --primary-primary-500: #044a7f;
+  --red-red-200: #d00416;
+  --red-red-alpha-10: rgba(251, 55, 72, 0.1);
+  --secondary-secondary-500: #9e3900;
+  --yellow-yellow-alpha-10: rgba(255, 219, 67, 0.1);
+
+  /* Number Variables */
+  --stroke-stroke-1: 1px;
+  --radius-radius-1: 6px;
+}

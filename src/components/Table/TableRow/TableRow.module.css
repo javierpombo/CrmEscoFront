@@ -1,0 +1,54 @@
+.tableRow {
+    background-color: white;
+    transition: background-color 0.2s ease;
+  }
+  
+  .tableRow:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .tableCell {
+    padding: 12px;
+    border-bottom: 1px solid #e7e7e7;
+    color: #4a4a4a;
+  }
+  
+  .avatar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .avatarIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
+  
+  .sectorPill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .colorBlue {
+    background-color: rgba(8, 133, 230, 0.1);
+    color: #0885e6;
+  }
+  
+  .colorOrange {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #FF9800;
+  }
+  
+  .colorRed {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #F44336;
+  }
+  
+  .colorGray {
+    background-color: rgba(158, 158, 158, 0.1);
+    color: #9E9E9E;
+  }

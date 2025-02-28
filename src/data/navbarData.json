@@ -1,0 +1,49 @@
+[
+    {
+      "id": 1,
+      "text": "Home",
+      "link": "/"
+    },
+    {
+      "id": 2,
+      "text": "Wiki",
+      "link": "/wiki"
+    },
+    {
+      "id": 3,
+      "text": "Backlog",
+      "link": "/backlog"
+    },
+    {
+      "id": 4,
+      "text": "RRHH",
+      "link": "/rrhh"
+    },
+    {
+      "id": 5,
+      "text": "Inversiones",
+      "link": "/inversiones"
+    },
+    {
+      "id": 6,
+      "text": "CRM",
+      "subItems": [
+        {
+          "id": 601,
+          "text": "Prospectos",
+          "link": "/crm/prospectos"
+        },
+        {
+          "id": 602,
+          "text": "Clientes",
+          "link": "/crm/clientes"
+        },
+        {
+          "id": 603,
+          "text": "Reportes",
+          "link": "/crm/reportes"
+        }
+      ]
+    }
+  ]
+  

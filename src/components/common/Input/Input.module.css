@@ -1,0 +1,67 @@
+.inputContainer {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+  
+  .label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.875rem;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+  }
+  
+  .fullWidth {
+    width: 100%;
+  }
+  
+  /* Variantes de estilo */
+  .standard {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    background-color: transparent;
+  }
+  
+  .outlined {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .filled {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+  }
+  
+  /* Estados */
+  .input:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+  }
+  
+  .error {
+    border-color: #d32f2f;
+  }
+  
+  .errorMessage {
+    color: #d32f2f;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+  
+  /* Deshabilitado */
+  .input:disabled {
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }

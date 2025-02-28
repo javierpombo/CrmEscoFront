@@ -1,0 +1,284 @@
+/*dashboard*/
+.desktop64 {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  background-color: #fff;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  line-height: normal;
+  letter-spacing: normal;
+  overflow: hidden;
+}
+
+/* Sección que contiene el header y el contenido */
+.headervariant3Parent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 15px; /* Ajusta a tu gusto */
+  max-width: calc(100% - 100px);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Contenedor scrollable que envuelve el contenido principal */
+.frameWrapper {
+  align-self: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0 var(--padding-13xl);
+  box-sizing: border-box;
+  max-width: 100%;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Agrupación de elementos con layout vertical */
+.frameGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 20px;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Encabezado principal CRM ESCO, con buscador, etc. */
+.crmEscoParent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 100%;
+  width: 100%;
+}
+
+.crmEsco {
+  margin: 0;
+  font-size: 32px !important;
+  font-weight: 700 !important;
+  line-height: 36px !important;
+  color: var(--neutral-neutral-1100);
+}
+
+/* Contenedor de filtros y búsqueda */
+.inputDropdownMenuItemParent {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap-base);
+  max-width: 100%;
+  font-size: var(--global-tokens-body-b-1-size);
+  color: var(--neutral-neutral-1100);
+  position: relative;
+}
+
+/* Campo de búsqueda (altura, sombra, etc.) */
+.search {
+  width: 320px;
+  border: none;
+  background-color: transparent;
+  height: 44px;
+  box-shadow: 0px 1px 2px rgba(10, 13, 18, 0.05);
+}
+
+/* Contenedor general para la(s) tabla(s) */
+.tableHeaderTabsParent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--gap-5xl);
+  font-size: var(--global-tokens-headings-h-6-size);
+  width: 100%;
+}
+
+/* Card o bloque que encierra cada tabla */
+.tableHeaderTabs {
+  align-self: stretch;
+  border-radius: var(--br-xl);
+  border: 1px solid var(--neutral-neutral-200);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: var(--padding-sm) var(--padding-mini);
+  gap: var(--gap-base);
+  width: 100%;
+  background-color: #fff;
+}
+
+/* Encabezado de cada sección (por ejemplo, 'Contactos activos') */
+.sectionHeader {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.contactosActivos {
+  margin: 0;
+  align-self: stretch;
+  position: relative;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  line-height: 28px !important;
+  color: var(--neutral-neutral-1000);
+}
+
+/* Contenedor de los 'chips' de filtros activos */
+.activeFiltersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.filterBadge {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-dodgerblue);
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: var(--global-tokens-body-b-6-size);
+  color: var(--primary-primary-500);
+}
+
+.removeFilter {
+  margin-left: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Área contenedora de la tabla (para scroll horizontal) */
+.tableHeaderGroupParent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  font-size: var(--global-tokens-body-b-6-size);
+  color: var(--neutral-neutral-1100);
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Botón estilo */
+.button {
+  width: 110px;
+  height: 40px;
+  box-shadow: 0px 1px 2px rgba(10, 13, 18, 0.05);
+  padding: var(--padding-3xs) var(--padding-base);
+  box-sizing: border-box;
+  color: #0885e6;
+  text-transform: none;
+}
+
+/* Tabla vacía (mensaje de 'Cargando datos...' o 'No hay registros') */
+.emptyTable {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 150px;
+  background-color: var(--neutral-neutral-200);
+  border-radius: var(--br-5xs);
+  color: var(--neutral-neutral-900);
+  font-size: var(--global-tokens-body-b-1-size);
+  width: 100%;
+}
+
+/* Media Queries */
+@media screen and (max-width: 750px) {
+  .headervariant3Parent {
+    max-width: 100%;
+  }
+
+  .desktop64 {
+    padding-left: var(--padding-xl);
+    padding-right: var(--padding-xl);
+    box-sizing: border-box;
+  }
+
+  .crmEscoParent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .inputDropdownMenuItemParent {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media screen and (max-width: 675px) {
+  .inputDropdownMenuItemParent {
+    flex-wrap: wrap;
+  }
+
+  .headervariant3Parent {
+    gap: 18px;
+  }
+
+  .search {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .crmEsco {
+    font-size: 28px !important;
+    line-height: 32px !important;
+  }
+
+  .contactosActivos {
+    font-size: 20px !important;
+    line-height: 24px !important;
+  }
+}
+
+/* Opcionales (avatar, pills, etc.) */
+.avatarContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatarIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.statusPill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.primaryPill {
+  background-color: rgba(8, 133, 230, 0.1);
+  color: #0885e6;
+}
+
+.errorPill {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}

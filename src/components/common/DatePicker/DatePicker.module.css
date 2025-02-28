@@ -1,0 +1,30 @@
+.datePickerContainer {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+  
+  .label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .inputField {
+    width: 100%;
+  }
+  
+  .calendarButton {
+    color: #1976d2;
+  }
+  
+  .inputField input {
+    padding: 8px 12px;
+    border-radius: 4px;
+  }
+  
+  .inputField input:focus {
+    outline: 2px solid #1976d2;
+    outline-offset: 2px;
+  }

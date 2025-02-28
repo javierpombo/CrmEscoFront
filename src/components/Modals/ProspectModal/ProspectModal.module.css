@@ -1,0 +1,41 @@
+.prospectModal {
+  width: 100%;
+}
+
+.formContainer {
+  padding: 1rem;
+}
+
+.sectionDivider {
+  margin: 2rem 0 1rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 600px) {
+  .formContainer {
+    padding: 1rem 0.5rem;
+  }
+  
+  .actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+  
+  .actions button {
+    width: 100%;
+  }
+}

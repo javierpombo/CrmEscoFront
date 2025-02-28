@@ -1,0 +1,28 @@
+.buttonBasemddefault {
+    cursor: pointer;
+    border: 1px solid var(--primary-primary-300);
+    padding: 10px 16px;
+    background-color: var(--primary-primary-300);
+    height: 40px;
+    width: 110px;
+    box-shadow: 0px 1px 2px rgba(10, 13, 18, 0.05);
+    border-radius: 6px;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .text {
+    text-decoration: none;
+    position: relative;
+    font-size: 16px;
+    line-height: 30px;
+    font-weight: 600;
+    font-family: var(--global-tokens-headings-h-7);
+    color: var(--neutral-neutral-100);
+    text-align: left;
+  }

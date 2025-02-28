@@ -1,0 +1,102 @@
+/* ProspectoView.module.css */
+
+/* Contenedor principal de la página */
+.pageContainer {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #fff;
+  }
+  
+  /* Contenedor para Navbar y Header */
+  .headerContainer {
+    flex: 0 0 auto;
+  }
+  
+  /* Contenedor para el contenido principal */
+  .contentWrapper {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+    margin: 16px 0 24px 16px;
+  }
+  
+  .breadcrumb span:not(:last-child) {
+    cursor: pointer;
+    color: #0066cc;
+  }
+  
+  .breadcrumb span:not(:last-child):hover {
+    text-decoration: underline;
+  }
+  
+  .breadcrumb span:last-child {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  /* Contador de eventos y acciones */
+  .countContainer {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  /* Tarjeta resumen */
+  .summaryCard {
+    margin-bottom: 16px;
+  }
+  
+  /* Información en la tarjeta */
+  .infoItem {
+    min-width: 120px;
+  }
+  
+  /* Tabs */
+  .tabs {
+    padding: 0 16px;
+  }
+  
+  /* Contenido del formulario dentro de los tabs */
+  .formContent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  
+  .formColumn {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  .formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  
+  /* Panel de contenido de cada tab con scroll interno si es necesario */
+  .tabsPanel {
+    overflow-y: auto;
+    padding: 16px;
+  }
+  
+  /* Ajustes Responsive */
+  @media (max-width: 768px) {
+    .breadcrumb {
+      margin: 16px;
+    }
+    .formContent {
+      flex-direction: column;
+    }
+  }
+  

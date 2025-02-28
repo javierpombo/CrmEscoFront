@@ -1,0 +1,267 @@
+.formContainer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.errorMessage {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  border-left: 4px solid #d32f2f;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.cardHeader {
+  background-color: #f5f5f5;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tabsContainer {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
+}
+
+.tabButton {
+  padding: 12px 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.tabButton:hover {
+  background-color: #f0f0f0;
+}
+
+.activeTab {
+  color: #1976d2;
+  border-bottom: 2px solid #1976d2;
+  background-color: #fff;
+}
+
+.tabContent {
+  display: none;
+  padding: 24px;
+}
+
+.activeTabContent {
+  display: block;
+}
+
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.sectionTitle h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.eventContainer, .actionContainer {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 24px;
+  color: #757575;
+  font-style: italic;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.checkbox {
+  margin-left: 0 !important;
+}
+
+.addButton {
+  margin-left: auto;
+}
+
+.removeButton {
+  margin-top: 24px;
+}
+
+.textarea {
+  min-height: 100px;
+}
+
+.divider {
+  margin: 24px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tabButton {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .tabContent {
+    padding: 16px;
+  }
+  
+  .formActions {
+    flex-direction: column;
+  }
+  
+  .formActions button {
+    width: 100%;
+  }
+  
+  .addButton, .removeButton {
+    width: 100%;
+  }
+}
+
+/* Input component styles */
+.inputContainer {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #666;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.input.outlined {
+  border: 1px solid #ccc;
+}
+
+.input.standard {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+}
+
+.input.filled {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  background-color: #f5f5f5;
+  border-radius: 4px 4px 0 0;
+}
+
+.input.error {
+  border-color: #d32f2f;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.errorMessage {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Select component styles */
+.selectContainer {
+  margin-bottom: 16px;
+}
+
+.selectWrapper {
+  position: relative;
+}
+
+.select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  appearance: none;
+}
+
+.select.outlined {
+  border: 1px solid #ccc;
+}
+
+.select.standard {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+}
+
+.select.filled {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  background-color: #f5f5f5;
+  border-radius: 4px 4px 0 0;
+}
+
+.select.error {
+  border-color: #d32f2f;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.selectArrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #666;
+  pointer-events: none;
+}
+
+/* Date picker custom styles */
+.datePicker {
+  width: 100%;
+}

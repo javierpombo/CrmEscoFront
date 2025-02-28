@@ -1,0 +1,134 @@
+.filterDropdown {
+  position: relative;
+  width: 141px; /* Ancho por defecto */
+  z-index: 1000;
+}
+
+.filterButton {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px solid var(--neutral-neutral-300, #e0e0e0);
+  border-radius: 8px;
+  background-color: var(--neutral-neutral-100, #f8f9fa);
+  cursor: pointer;
+  box-sizing: border-box;
+  box-shadow: 0px 1px 2px rgba(10, 13, 18, 0.05);
+  transition: all 0.2s ease;
+}
+
+.filterButton:hover {
+  background-color: var(--neutral-neutral-200, #e9ecef);
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  height: 20px;
+  width: 20px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.rotated {
+  transform: rotate(180deg);
+}
+
+.text {
+  font-size: 14px;
+  color: var(--neutral-neutral-1100, #212529);
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  width: 240px;
+  background-color: var(--neutral-neutral-100, #ffffff);
+  border: 1px solid var(--neutral-neutral-300, #e0e0e0);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 10;
+  
+  /* Auto altura con límite máximo solo si es necesario */
+  max-height: calc(100vh - 200px); /* Distancia desde la parte superior e inferior */
+  overflow-y: auto; /* Solo añadir scroll si es necesario */
+}
+
+/* Posicionamiento del menú desplegable */
+.menuLeft {
+  left: 0;
+}
+
+.menuRight {
+  right: 0;
+}
+
+.menuCenter {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdownItem:not(:last-child) {
+  border-bottom: 1px solid var(--neutral-neutral-200, #f0f0f0);
+}
+
+.dropdownItem:hover {
+  background-color: var(--neutral-neutral-200, #f0f0f0);
+}
+
+.itemText {
+  flex: 1;
+  font-size: 14px;
+  color: var(--neutral-neutral-1100, #212529);
+  margin: 0 8px;
+}
+
+/* Estilos responsive */
+@media screen and (max-width: 768px) {
+  .filterDropdown {
+    width: 100%;
+    max-width: 141px;
+  }
+  
+  .dropdownMenu {
+    width: 220px;
+    max-width: 100vw;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .filterDropdown {
+    max-width: 120px;
+  }
+  
+  .text {
+    font-size: 13px;
+  }
+  
+  .dropdownMenu {
+    width: 200px;
+  }
+
+  .itemText {
+    font-size: 13px;
+  }
+}

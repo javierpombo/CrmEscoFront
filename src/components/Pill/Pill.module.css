@@ -1,0 +1,26 @@
+.root {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    mix-blend-mode: multiply;
+  }
+  
+  .pillBase {
+    border-radius: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    text-align: center;
+    font-size: 14px;
+    font-family: 'Work Sans', sans-serif;
+  }
+  
+  .optionsDefaultLabel {
+    text-decoration: none;
+    position: relative;
+    line-height: 21px;
+    font-weight: 500;
+  }

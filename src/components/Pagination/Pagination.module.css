@@ -1,0 +1,131 @@
+/* Pagination.module.css */
+/* Ajustado a la maqueta con botones redondeados, hover y estado activo. */
+
+/* Contenedor principal de la paginación */
+.pagination {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between; 
+    gap: 16px; /* Espacio entre botones y números */
+    padding: 12px 20px; 
+    box-sizing: border-box;
+    background-color: #fff;
+    width: 100%;
+    /* Borde opcional alrededor de la paginación:
+       border: 1px solid var(--neutral-neutral-200);
+       border-radius: 8px;
+    */
+  }
+  
+  /* Botones de Anterior / Siguiente */
+  .button {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+  }
+  
+  .button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  
+  /* Fondo del botón (con icono y label) */
+  .buttonBase {
+    box-shadow: 0px 1px 2px rgba(10, 13, 18, 0.05);
+    border-radius: 8px;
+    background-color: var(--neutral-neutral-100);
+    border: 1px solid var(--color-lightgray);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+  }
+  
+  /* Icono dentro de Anterior / Siguiente */
+  .icon {
+    height: 20px;
+    width: 20px;
+    flex-shrink: 0;
+  }
+  
+  /* Texto dentro de Anterior / Siguiente */
+  .pageLabel {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    color: var(--neutral-neutral-1000);
+  }
+  
+  /* Contenedor de números de página */
+  .paginationNumbers {
+    display: flex;
+    flex-direction: row;
+    gap: 8px; /* Espacio entre números */
+  }
+  
+  /* Botón activo (la página actual) */
+  .paginationNumberBase {
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    background-color: #0070F3; /* Color activo */
+    height: 40px;
+    width: 40px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* El texto del botón activo */
+  .number {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff; /* Texto blanco en botón activo */
+  }
+  
+  /* Botones inactivos (no activos) */
+  .paginationNumberBase1 {
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    background-color: var(--neutral-neutral-100);
+    height: 40px;
+    width: 40px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .paginationNumberBase1:hover {
+    background-color: #ECECEC;
+  }
+  
+  /* El texto de los botones inactivos */
+  .number1 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #0070F3; /* Texto azul en botón inactivo */
+  }
+  
+  .content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+  
