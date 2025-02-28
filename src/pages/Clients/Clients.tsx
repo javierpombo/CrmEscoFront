@@ -318,7 +318,7 @@ const Dashboard: React.FC = () => {
                     variant="h2"
                     component="h2"
                   >
-                    Contactos activos
+                    Clientes activos
                   </Typography>
 
                   {/* Chips de filtros activos */}
@@ -362,7 +362,7 @@ const Dashboard: React.FC = () => {
                   variant="h2"
                   component="h2"
                 >
-                  Contactos inactivos
+                  Clientes inactivos
                 </Typography>
                 <div className={styles.tableHeaderGroupParent}>
                   {loading ? (

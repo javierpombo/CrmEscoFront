@@ -66,11 +66,22 @@ const fixedHeightStyles: Record<string, React.CSSProperties> = {
   },
   summaryCard: {
     marginBottom: '16px'
+  },
+  listContainer: {
+    height: 'calc(100% - 140px)',
+    overflowY: 'auto',
+    marginBottom: '8px'
+  },
+  addForm: {
+    padding: '10px',
+    backgroundColor: '#f9f9f9',
+    marginTop: '10px',
+    borderRadius: '4px'
   }
 };
 
 interface EventoType {
-  id: number;
+  id?: number | string;
   event_date: string;
   description: string;
   next_contact: string;
@@ -78,7 +89,7 @@ interface EventoType {
 }
 
 interface AccionType {
-  id: number;
+  id?: number | string;
   action_date: string;
   description: string;
   next_contact: string;
@@ -149,7 +160,6 @@ const ProspectoView = () => {
     navigate('/crm/prospectos');
   };
   
-
   const handleEventChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewEvent(prev => ({ ...prev, [name]: value }));
@@ -175,7 +185,14 @@ const ProspectoView = () => {
     }
   };
 
-//  
+  const deleteEvent = (eventId: number | string | undefined) => {
+    if (!prospecto || eventId === undefined) return;
+    
+    const currentEvents = prospecto.events || [];
+    const updatedEvents = currentEvents.filter(event => event.id !== eventId);
+    
+    setProspecto({ ...prospecto, events: updatedEvents });
+  };
 
   const handleActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -202,6 +219,15 @@ const ProspectoView = () => {
     }
   };
 
+  const deleteAction = (actionId: number | string | undefined) => {
+    if (!prospecto || actionId === undefined) return;
+    
+    const currentActions = prospecto.actions || [];
+    const updatedActions = currentActions.filter(action => action.id !== actionId);
+    
+    setProspecto({ ...prospecto, actions: updatedActions });
+  };
+
   const handleSaveChanges = async () => {
     if (!prospecto || !id) return;
     try {
@@ -225,8 +251,7 @@ const ProspectoView = () => {
       <div style={fixedHeightStyles.contentWrapper}>
         <div style={fixedHeightStyles.mainContent}>
           <div className={styles.breadcrumb}>
-          <span onClick={() => navigate('/crm/clientes')}>Inicio</span>
-
+            <span onClick={() => navigate('/crm/clientes')}>Inicio</span>
             <span> {'>'} </span>
             <span onClick={() => navigate('/crm/prospectos')}>Prospectos</span>
             <span> {'>'} </span>
@@ -365,7 +390,97 @@ const ProspectoView = () => {
                     <Typography variant="subtitle1" gutterBottom>
                       Eventos ({(prospecto.events || []).length})
                     </Typography>
-                    {/* Resto del código para eventos */}
+                    
+                    <div style={fixedHeightStyles.listContainer}>
+                      {(prospecto.events || []).length > 0 ? (
+                        (prospecto.events || []).map((event) => (
+                          <Card key={typeof event.id === 'undefined' ? Math.random() : event.id} variant="outlined" sx={{ mb: 1, p: 1 }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                              <div>
+                                <Typography variant="subtitle2">
+                                  Fecha: {event.event_date}
+                                </Typography>
+                                <Typography variant="body2" mt={0.5}>
+                                  {event.description}
+                                </Typography>
+                                {event.next_contact && (
+                                  <Typography variant="caption" color="primary" display="block">
+                                    Próximo contacto: {event.next_contact}
+                                  </Typography>
+                                )}
+                              </div>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => event.id !== undefined && deleteEvent(event.id)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          </Card>
+                        ))
+                      ) : (
+                        <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', my: 2 }}>
+                          No hay eventos registrados
+                        </Typography>
+                      )}
+                    </div>
+                    
+                    <div style={fixedHeightStyles.addForm}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                        Agregar nuevo evento
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <TextField
+                          label="Fecha"
+                          name="event_date"
+                          type="date"
+                          value={newEvent.event_date}
+                          onChange={handleEventChange}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ width: 'calc(50% - 4px)' }}
+                        />
+                        
+                        <TextField
+                          label="Próximo contacto"
+                          name="next_contact"
+                          type="date"
+                          value={newEvent.next_contact}
+                          onChange={handleEventChange}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ width: 'calc(50% - 4px)' }}
+                        />
+                        
+                        <TextField
+                          label="Descripción"
+                          name="description"
+                          value={newEvent.description}
+                          onChange={handleEventChange}
+                          fullWidth
+                          multiline
+                          rows={2}
+                          size="small"
+                          sx={{ mt: 1 }}
+                        />
+                      </Box>
+                      
+                      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={addEvent}
+                          disabled={!newEvent.event_date || !newEvent.description}
+                        >
+                          Agregar
+                        </Button>
+                      </Box>
+                    </div>
                   </div>
                 )}
                 {activeTab === 2 && (
@@ -373,7 +488,97 @@ const ProspectoView = () => {
                     <Typography variant="subtitle1" gutterBottom>
                       Acciones ({(prospecto.actions || []).length})
                     </Typography>
-                    {/* Resto del código para acciones */}
+                    
+                    <div style={fixedHeightStyles.listContainer}>
+                      {(prospecto.actions || []).length > 0 ? (
+                        (prospecto.actions || []).map((action) => (
+                          <Card key={typeof action.id === 'undefined' ? Math.random() : action.id} variant="outlined" sx={{ mb: 1, p: 1 }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                              <div>
+                                <Typography variant="subtitle2">
+                                  Fecha: {action.action_date}
+                                </Typography>
+                                <Typography variant="body2" mt={0.5}>
+                                  {action.description}
+                                </Typography>
+                                {action.next_contact && (
+                                  <Typography variant="caption" color="primary" display="block">
+                                    Próximo contacto: {action.next_contact}
+                                  </Typography>
+                                )}
+                              </div>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => action.id !== undefined && deleteAction(action.id)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          </Card>
+                        ))
+                      ) : (
+                        <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', my: 2 }}>
+                          No hay acciones registradas
+                        </Typography>
+                      )}
+                    </div>
+                    
+                    <div style={fixedHeightStyles.addForm}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                        Agregar nueva acción
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <TextField
+                          label="Fecha"
+                          name="action_date"
+                          type="date"
+                          value={newAction.action_date}
+                          onChange={handleActionChange}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ width: 'calc(50% - 4px)' }}
+                        />
+                        
+                        <TextField
+                          label="Próximo contacto"
+                          name="next_contact"
+                          type="date"
+                          value={newAction.next_contact}
+                          onChange={handleActionChange}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ width: 'calc(50% - 4px)' }}
+                        />
+                        
+                        <TextField
+                          label="Descripción"
+                          name="description"
+                          value={newAction.description}
+                          onChange={handleActionChange}
+                          fullWidth
+                          multiline
+                          rows={2}
+                          size="small"
+                          sx={{ mt: 1 }}
+                        />
+                      </Box>
+                      
+                      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          startIcon={<AddIcon />}
+                          onClick={addAction}
+                          disabled={!newAction.action_date || !newAction.description}
+                        >
+                          Agregar
+                        </Button>
+                      </Box>
+                    </div>
                   </div>
                 )}
               </div>
