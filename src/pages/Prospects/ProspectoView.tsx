@@ -231,12 +231,13 @@ const ProspectoView = () => {
   const handleSaveChanges = async () => {
     if (!prospecto || !id) return;
     try {
-      const success = await prospectoService.updateProspectoFull(id, prospecto);
-      if (success) {
-        console.log("Cambios guardados con éxito");
-      } else {
-        console.error("Error al guardar los cambios");
-      }
+      const prospectoToSave = {
+        ...prospecto,
+        events: prospecto.events || [],
+        actions: prospecto.actions || [],
+      };
+      const success = await prospectoService.updateProspectoFull(id, prospectoToSave);
+      // ...
     } catch (err) {
       console.error('Error al guardar los cambios:', err);
     }

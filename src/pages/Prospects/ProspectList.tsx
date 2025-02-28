@@ -215,7 +215,7 @@ const ProspectList: React.FC = () => {
       // Nos aseguramos de que no haya ID en los datos
       const newData = { ...data };
       delete (newData as any).id;
-      
+
       const result = await prospectoService.createProspecto(newData);
       if (result) {
         // Refrescar la lista después de crear
@@ -281,6 +281,7 @@ const ProspectList: React.FC = () => {
           Eliminar
         </button>
       </div>
+
     )
   }));
 

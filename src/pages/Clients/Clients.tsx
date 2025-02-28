@@ -88,11 +88,23 @@ const Dashboard: React.FC = () => {
   ];
 
   // Generar opciones de filtro basadas en las columnas de la tabla
-  const filterOptions: FilterOption[] = contactColumns.map(column => ({
-    id: column.field,
-    name: column.label,
-    icon: `/next-icon.svg`
-  }));
+ // Generamos opciones de filtro a partir de contactColumns...
+const baseFilterOptions = contactColumns.map(column => ({
+  id: column.field,
+  name: column.label,
+  icon: '/next-icon.svg'
+}));
+
+// ...y agregamos manualmente la opción para "Estado"
+const filterOptions: FilterOption[] = [
+  ...baseFilterOptions,
+  {
+    id: 'activo',
+    name: 'Activo',
+    icon: '/next-icon.svg',
+  },
+];
+
 
   // 3) Filtros
   const filterContacts = (filterId: string) => {
