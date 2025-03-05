@@ -4,10 +4,12 @@ import Header from '../../components/Header/Header';
 import Navbar from '../../components/Navigation/Navbar/Navbar';
 import Table from '../../components/Table/Table';
 import FilterDropdown, { FilterOption } from '../../components/FilterDropdown/FilterDropdown';
-import { getContacts } from '../../api/api';
+import Pagination from '../../components/Pagination/Pagination';
 import { Typography, Button, TextField } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { getClients } from '../../api/api';
 
-interface Contact {
+interface Client {
   id: string;
   nombre: string;
   sector: string;
@@ -19,277 +21,98 @@ interface Contact {
   activo: boolean;
 }
 
-interface ApiContact {
-  Actividad?: string;
-  CUIT?: string;
-  Descripcion?: string;
-  DomicilioCom?: string;
-  EMail?: string;
-  EstaAnulado?: string;
-  EstaBloqueado?: string;
-  FechaActualizacion?: string;
-  Numero?: string;
-  Oficial?: string;
-  Referente?: string;
-  [key: string]: any;
-}
+const ClientsDashboard: React.FC = () => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(false);
+  // 'todos' = sin filtro, 'activos' o 'inactivos' según lo seleccionado
+  const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'inactivos'>('todos');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const navigate = useNavigate();
 
-const Dashboard: React.FC = () => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
-  const [activeFilters, setActiveFilters] = useState<{ [key: string]: string }>({});
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // 1) Obtener la data de contactos
-  useEffect(() => {
-    const fetchContacts = async () => {
-      setLoading(true);
-      try {
-        const apiData = await getContacts();
-        const transformedData: Contact[] = apiData.map((item: ApiContact, index: number) => {
-          const isActive = item.EstaAnulado === '0' && item.EstaBloqueado === '0';
-          return {
-            id: item.Numero || String(index + 1),
-            nombre: item.Descripcion || '-',
-            sector: item.Actividad || '-',
-            oficial: item.Oficial?.split(',')[0] || '-',
-            referente: item.Referente?.split(',')[0] || '-',
-            numcomitente: item.Numero || '-',
-            cuit: item.CUIT || '-',
-            mail: item.EMail || '-',
-            activo: isActive,
-          };
-        });
-        setContacts(transformedData);
-        setFilteredContacts(transformedData);
-      } catch (error) {
-        console.error('Error al obtener los contactos:', error);
-        setContacts([]);
-        setFilteredContacts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContacts();
-  }, []);
-
-  // 2) Definir columnas en { label, field }
-  const contactColumns = [
+  // Columnas para la tabla (deben coincidir con las propiedades mapeadas)
+  const clientColumns = [
     { label: 'Nombre', field: 'nombre' },
     { label: 'Sector', field: 'sector' },
     { label: 'Oficial', field: 'oficial' },
     { label: 'Referente', field: 'referente' },
     { label: 'Número Comitente', field: 'numcomitente' },
     { label: 'Número de CUIT', field: 'cuit' },
-    { label: 'Mail Comitente', field: 'mail' },
+    { label: 'Mail', field: 'mail' },
     { label: 'Estado', field: 'activo' },
   ];
 
-  // Generar opciones de filtro basadas en las columnas de la tabla
- // Generamos opciones de filtro a partir de contactColumns...
-const baseFilterOptions = contactColumns.map(column => ({
-  id: column.field,
-  name: column.label,
-  icon: '/next-icon.svg'
-}));
+  // Opciones del dropdown: "Todos", "Activos" e "Inactivos"
+  const filterOptions: FilterOption[] = [
+    { id: 'todos', name: 'Todos', icon: '/next-icon.svg' },
+    { id: 'activos', name: 'Activos', icon: '/next-icon.svg' },
+    { id: 'inactivos', name: 'Inactivos', icon: '/next-icon.svg' },
+  ];
 
-// ...y agregamos manualmente la opción para "Estado"
-const filterOptions: FilterOption[] = [
-  ...baseFilterOptions,
-  {
-    id: 'activo',
-    name: 'Activo',
-    icon: '/next-icon.svg',
-  },
-];
-
-
-  // 3) Filtros
-  const filterContacts = (filterId: string) => {
-    setActiveFilters(prev => ({ ...prev, [filterId]: filterId }));
-
-    let filtered = [...contacts];
-    
-    // Aplicar todos los filtros activos
-    Object.keys({ ...activeFilters, [filterId]: filterId }).forEach(filter => {
-      switch (filter) {
-        case 'sector':
-          filtered = filtered.filter(contact => contact.sector && contact.sector !== '-');
-          break;
-        case 'oficial':
-          filtered = filtered.filter(contact => contact.oficial && contact.oficial !== '-');
-          break;
-        case 'referente':
-          filtered = filtered.filter(contact => contact.referente && contact.referente !== '-');
-          break;
-        case 'nombre':
-          filtered = filtered.filter(contact => contact.nombre && contact.nombre !== '-');
-          break;
-        case 'numcomitente':
-          filtered = filtered.filter(contact => contact.numcomitente && contact.numcomitente !== '-');
-          break;
-        case 'cuit':
-          filtered = filtered.filter(contact => contact.cuit && contact.cuit !== '-');
-          break;
-        case 'mail':
-          filtered = filtered.filter(contact => contact.mail && contact.mail !== '-');
-          break;
-        case 'activo':
-          // Este ya se filtra después (activeContacts/inactiveContacts)
-          break;
-        default:
-          break;
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await getClients(currentPage, filterStatus);
+        setClients(response.data);
+        setTotalPages(response.pagination.lastPage);
+      } catch (error) {
+        console.error('Error al obtener clientes:', error);
+      } finally {
+        setLoading(false);
       }
-    });
+    };
 
-    // Aplicar búsqueda de texto si existe
-    if (searchTerm) {
-      filtered = filtered.filter(contact =>
-        contact.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.sector.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.oficial.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.referente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.mail.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+    fetchData();
+  }, [currentPage, filterStatus]);
 
-    setFilteredContacts(filtered);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
-  const removeFilter = (filterId: string) => {
-    const newFilters = { ...activeFilters };
-    delete newFilters[filterId];
-    setActiveFilters(newFilters);
-
-    let filtered = [...contacts];
-    
-    // Aplicar los filtros restantes
-    Object.keys(newFilters).forEach(filter => {
-      switch (filter) {
-        case 'sector':
-          filtered = filtered.filter(contact => contact.sector && contact.sector !== '-');
-          break;
-        case 'oficial':
-          filtered = filtered.filter(contact => contact.oficial && contact.oficial !== '-');
-          break;
-        case 'referente':
-          filtered = filtered.filter(contact => contact.referente && contact.referente !== '-');
-          break;
-        case 'nombre':
-          filtered = filtered.filter(contact => contact.nombre && contact.nombre !== '-');
-          break;
-        case 'numcomitente':
-          filtered = filtered.filter(contact => contact.numcomitente && contact.numcomitente !== '-');
-          break;
-        case 'cuit':
-          filtered = filtered.filter(contact => contact.cuit && contact.cuit !== '-');
-          break;
-        case 'mail':
-          filtered = filtered.filter(contact => contact.mail && contact.mail !== '-');
-          break;
-        case 'activo':
-          // Este ya se filtra después
-          break;
-        default:
-          break;
-      }
-    });
-
-    if (searchTerm) {
-      filtered = filtered.filter(contact =>
-        contact.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.sector.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.oficial.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.referente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.mail.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    setFilteredContacts(filtered);
+  // La función onFilterSelect ahora recibe directamente el id del filtro (string)
+  const handleFilterSelect = (filterId: string) => {
+    setFilterStatus(filterId as 'todos' | 'activos' | 'inactivos');
+    setCurrentPage(1);
   };
 
-  // 4) Búsqueda
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const term = event.target.value.toLowerCase();
-    setSearchTerm(term);
+  // Búsqueda local: filtra los clientes por los campos mapeados
+  const filteredClients = clients.filter(client =>
+    (client.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.sector || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.oficial || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.referente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.mail || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    let filtered = contacts;
-    if (term) {
-      filtered = filtered.filter(contact =>
-        contact.nombre.toLowerCase().includes(term) ||
-        contact.sector.toLowerCase().includes(term) ||
-        contact.oficial.toLowerCase().includes(term) ||
-        contact.referente.toLowerCase().includes(term) ||
-        contact.mail.toLowerCase().includes(term)
-      );
-    }
-
-    if (Object.keys(activeFilters).length > 0) {
-      Object.keys(activeFilters).forEach(filter => {
-        switch (filter) {
-          case 'sector':
-            filtered = filtered.filter(contact => contact.sector && contact.sector !== '-');
-            break;
-          case 'oficial':
-            filtered = filtered.filter(contact => contact.oficial && contact.oficial !== '-');
-            break;
-          case 'referente':
-            filtered = filtered.filter(contact => contact.referente && contact.referente !== '-');
-            break;
-          case 'nombre':
-            filtered = filtered.filter(contact => contact.nombre && contact.nombre !== '-');
-            break;
-          case 'numcomitente':
-            filtered = filtered.filter(contact => contact.numcomitente && contact.numcomitente !== '-');
-            break;
-          case 'cuit':
-            filtered = filtered.filter(contact => contact.cuit && contact.cuit !== '-');
-            break;
-          case 'mail':
-            filtered = filtered.filter(contact => contact.mail && contact.mail !== '-');
-            break;
-          case 'activo':
-            // Este ya se filtra después
-            break;
-          default:
-            break;
-        }
-      });
-    }
-
-    setFilteredContacts(filtered);
-  };
-
-  // 5) Contactos activos vs inactivos
-  const activeContacts = filteredContacts.filter(contact => contact.activo);
-  const inactiveContacts = filteredContacts.filter(contact => !contact.activo);
+  // Se agrega el botón "Ver" para cada fila que redirige al detalle del cliente
+  const clientsWithActions = filteredClients.map(client => ({
+    ...client,
+    acciones: (
+      <Button variant="outlined" onClick={() => navigate(`/crm/clients/details/${client.numcomitente}`)}>
+        Ver
+      </Button>
+    )
+  }));
 
   return (
     <div className={styles.desktop64}>
       <Navbar />
-
       <main className={styles.headervariant3Parent}>
         <Header />
-
         <section className={styles.frameWrapper}>
           <div className={styles.frameGroup}>
-
-            {/* Título + Filtros + Búsqueda */}
+            {/* Título, filtros y búsqueda */}
             <div className={styles.crmEscoParent}>
-              <Typography
-                className={styles.crmEsco}
-                variant="h1"
-                component="h1"
-              >
-                CRM ESCO
+              <Typography className={styles.crmEsco} variant="h1" component="h1">
+                Clientes
               </Typography>
               <div className={styles.inputDropdownMenuItemParent}>
-                <FilterDropdown 
-                  options={filterOptions} 
-                  onFilterSelect={filterContacts} 
-                  buttonText="Filtros"
+                <FilterDropdown
+                  options={filterOptions}
+                  onFilterSelect={handleFilterSelect}
+                  buttonText="Filtrar"
                   width="150px"
                 />
                 <TextField
@@ -297,11 +120,11 @@ const filterOptions: FilterOption[] = [
                   placeholder="Buscar"
                   variant="outlined"
                   value={searchTerm}
-                  onChange={handleSearch}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <img width="20px" height="20px" src="/search.svg" alt="Search" />
-                    ),
+                    )
                   }}
                   sx={{
                     '& fieldset': { borderColor: '#e7e7e7' },
@@ -320,82 +143,33 @@ const filterOptions: FilterOption[] = [
               </div>
             </div>
 
-            {/* CONTENEDOR DONDE VAN LAS DOS TABLAS */}
+            {/* Tabla de Clientes */}
             <div className={styles.tableHeaderTabsParent}>
-              {/* CONTACTOS ACTIVOS */}
               <div className={styles.tableHeaderTabs}>
-                <div className={styles.sectionHeader}>
-                  <Typography
-                    className={styles.contactosActivos}
-                    variant="h2"
-                    component="h2"
-                  >
-                    Clientes activos
-                  </Typography>
-
-                  {/* Chips de filtros activos */}
-                  {Object.keys(activeFilters).length > 0 && (
-                    <div className={styles.activeFiltersContainer}>
-                      {Object.keys(activeFilters).map(filter => (
-                        <div key={filter} className={styles.filterBadge}>
-                          <span>{contactColumns.find(col => col.field === filter)?.label || filter}</span>
-                          <span
-                            className={styles.removeFilter}
-                            onClick={() => removeFilter(filter)}
-                          >
-                            ×
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className={styles.tableHeaderGroupParent}>
-                  {loading ? (
-                    <div className={styles.emptyTable}>Cargando datos...</div>
-                  ) : (
-                    <Table
-                      data={activeContacts}
-                      columns={contactColumns}
-                    />
-                  )}
-                </div>
-
-                <Button className={styles.button} variant="outlined">
-                  Ver todos
-                </Button>
-              </div>
-
-              {/* CONTACTOS INACTIVOS */}
-              <div className={styles.tableHeaderTabs}>
-                <Typography
-                  className={styles.contactosActivos}
-                  variant="h2"
-                  component="h2"
-                >
-                  Clientes inactivos
-                </Typography>
-                <div className={styles.tableHeaderGroupParent}>
-                  {loading ? (
-                    <div className={styles.emptyTable}>Cargando datos...</div>
-                  ) : (
-                    <Table
-                      data={inactiveContacts}
-                      columns={contactColumns}
-                    />
-                  )}
-                </div>
-                <Button className={styles.button} variant="outlined">
-                  Ver todos
-                </Button>
+                {loading ? (
+                  <div className={styles.emptyTable}>Cargando datos...</div>
+                ) : (
+                  <Table
+                    columns={[...clientColumns, { label: 'Acciones', field: 'acciones' }]}
+                    data={clientsWithActions}
+                  />
+                )}
               </div>
             </div>
           </div>
         </section>
+
+        {/* Paginación */}
+        <div className={styles.footer}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </main>
     </div>
   );
 };
 
-export default Dashboard;
+export default ClientsDashboard;

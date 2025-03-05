@@ -1,9 +1,10 @@
+// src/pages/Clients/ClientView.tsx
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
-  Divider,
   Tab,
   Tabs,
   TextField,
@@ -25,14 +26,15 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
+import Navbar from '../../components/Navigation/Navbar/Navbar';
 import Header from '../../components/Header/Header';
-import { prospectoService } from '../../services/prospectoService';
-import { Prospecto, EventoType, AccionType } from '../../types/Prospecto';
 import AsyncSelect from '../../components/AsyncSelect';
-import { getUsers } from '../../services/apiService';
-import { getUserNameById } from '../../services/userService';
 
-import styles from './ProspectoView.module.css';
+// Servicio y tipos de clientes
+import { clientesService } from '../../services/clientesService';
+import { Client, ClientEvent, ClientAction } from '../../types/Client';
+
+import styles from './ClientView.module.css';
 
 const fixedHeightStyles: Record<string, React.CSSProperties> = {
   pageContainer: {
@@ -73,7 +75,7 @@ const fixedHeightStyles: Record<string, React.CSSProperties> = {
     marginBottom: '16px'
   },
   listContainer: {
-    height: 'calc(100% - 140px)',
+    maxHeight: '300px',
     overflowY: 'auto',
     marginBottom: '8px'
   },
@@ -85,122 +87,109 @@ const fixedHeightStyles: Record<string, React.CSSProperties> = {
   }
 };
 
-const ProspectoView = () => {
-  const { id } = useParams<{ id: string }>();
+const ClientView: React.FC = () => {
+  // Usamos "numcomitente" (equivalente a "CodComitente") en la URL
+  const { numcomitente } = useParams<{ numcomitente: string }>();
   const navigate = useNavigate();
 
-  const [prospecto, setProspecto] = useState<Prospecto | null>(null);
+  const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<number>(0);
   const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
 
+  // Estados para nuevos eventos y acciones
+  const [newEvent, setNewEvent] = useState<ClientEvent>({
+    id: '',
+    client_id: '',
+    event_date: '',
+    description: '',
+    next_contact: '',
+    user_id: '1'
+  });
+  const [newAction, setNewAction] = useState<ClientAction>({
+    id: '',
+    client_id: '',
+    action_date: '',
+    description: '',
+    next_contact: '',
+    user_id: '1'
+  });
 
-
-  // Estados para nuevos eventos y acciones (incluyen user_id)
-  const [newEvent, setNewEvent] = useState<{
-    event_date: string;
-    description: string;
-    next_contact: string;
-    user_id: string;
-  }>({ event_date: "", description: "", next_contact: "", user_id: "1" });
-
-  const [newAction, setNewAction] = useState<{
-    action_date: string;
-    description: string;
-    next_contact: string;
-    user_id: string;
-  }>({ action_date: "", description: "", next_contact: "", user_id: "1" });
-
-  // Estados para editar evento mediante modal
+  // Estados para modales de edición
   const [editEventDialogOpen, setEditEventDialogOpen] = useState<boolean>(false);
-  const [eventToEdit, setEventToEdit] = useState<EventoType | null>(null);
-
-  // Estados para editar acción mediante modal
+  const [eventToEdit, setEventToEdit] = useState<ClientEvent | null>(null);
   const [editActionDialogOpen, setEditActionDialogOpen] = useState<boolean>(false);
-  const [actionToEdit, setActionToEdit] = useState<AccionType | null>(null);
+  const [actionToEdit, setActionToEdit] = useState<ClientAction | null>(null);
 
+  // Cargar el detalle del cliente usando "numcomitente"
   useEffect(() => {
-    const fetchProspecto = async () => {
-      if (!id) {
-        setError('ID de prospecto no válido');
+    const fetchClient = async () => {
+      if (!numcomitente) {
+        setError('Número de comitente no válido');
         setIsLoading(false);
         return;
       }
       setIsLoading(true);
       setError(null);
       try {
-        const data = await prospectoService.getProspectoById(id);
+        const data = await clientesService.getClientByCodComitente(numcomitente);
         if (data) {
-          const users = await getUsers(); // Obtener lista de usuarios
-
-          setUsers(users.map(user => ({
-            id: String(user.id),
-            label: user.label
-          }))); // Guardamos la lista de usuarios formateada para fácil acceso
-
-          setProspecto({
-            ...data,
-            referente: data.referente, // Solo guardamos el ID
-            oficial: data.oficial,     // Solo guardamos el ID
-          });
-
-          // setUsers(users); // Guardamos la lista de usuarios para los select
+          setClient(data);
+          const usersData = await clientesService.getUsers();
+          setUsers(usersData);
         } else {
-          setError('No se encontró el prospecto');
+          setError('Cliente no encontrado');
         }
       } catch (err) {
-        console.error('Error al cargar el prospecto:', err);
+        console.error('Error al cargar el cliente:', err);
         setError('Error al cargar los datos');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProspecto();
-  }, [id]);
+    fetchClient();
+  }, [numcomitente]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
   const handleGoBack = () => {
-    navigate('/crm/prospectos');
+    navigate('/crm/clients');
   };
 
-  // Manejo de cambios en el formulario de creación de evento
+  // Funciones para eventos
   const handleEventChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewEvent(prev => ({ ...prev, [name]: value }));
   };
 
-  // Crear evento: llama al service y actualiza el estado
   const addEvent = async () => {
-    if (!prospecto || !prospecto.id || !newEvent.event_date || !newEvent.description) return;
-    const prospectoId = prospecto.id as string;
+    if (!client || !client.id || !newEvent.event_date || !newEvent.description) return;
     try {
-      const eventoCreado = await prospectoService.createEvent(prospectoId, newEvent);
-      if (eventoCreado) {
-        setProspecto(prev => ({
-          ...prev!,
-          events: [...(prev?.events || []), eventoCreado]
-        }));
-        setNewEvent({ event_date: "", description: "", next_contact: "", user_id: "1" });
+      const createdEvent = await clientesService.createEvent(client.id, newEvent);
+      if (createdEvent) {
+        setClient(prev => prev ? { ...prev, events: [...(prev.events ?? []), createdEvent] } : prev);
+        setNewEvent({ id: '', client_id: '', event_date: '', description: '', next_contact: '', user_id: '1' });
       }
     } catch (err) {
       console.error('Error al crear evento:', err);
     }
   };
 
-  // Eliminar evento del estado
-  const deleteEvent = (eventId: number | string | undefined) => {
-    if (!prospecto || eventId === undefined) return;
-    const updatedEvents = (prospecto.events || []).filter(event => event.id !== eventId);
-    setProspecto({ ...prospecto, events: updatedEvents });
+  const deleteEvent = async (eventId: string | number) => {
+    if (!client) return;
+    try {
+      await clientesService.deleteEvent(eventId.toString());
+      setClient(prev => prev ? { ...prev, events: (prev.events ?? []).filter(e => e.id !== eventId) } : prev);
+    } catch (err) {
+      console.error('Error al eliminar evento:', err);
+    }
   };
 
-  // Abrir modal de edición de evento
-  const handleOpenEditEvent = (event: EventoType) => {
+  const handleOpenEditEvent = (event: ClientEvent) => {
     setEventToEdit(event);
     setEditEventDialogOpen(true);
   };
@@ -213,20 +202,18 @@ const ProspectoView = () => {
   const handleEditEventChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!eventToEdit) return;
     const { name, value } = e.target;
-    setEventToEdit(prev => prev ? { ...prev, [name]: value } : null);
+    setEventToEdit(prev => prev ? { ...prev, [name]: value } : prev);
   };
 
-  // Guardar cambios en evento editado
   const handleSaveEditedEvent = async () => {
-    if (!prospecto || !prospecto.id || !eventToEdit) return;
-    const prospectoId = prospecto.id as string;
+    if (!client || !client.id || !eventToEdit) return;
     try {
-      const eventoActualizado = await prospectoService.updateEvent(prospectoId, eventToEdit);
-      if (eventoActualizado) {
-        setProspecto(prev => ({
-          ...prev!,
-          events: (prev!.events || []).map(e => e.id === eventoActualizado.id ? eventoActualizado : e)
-        }));
+      const updatedEvent = await clientesService.updateEvent(client.id, eventToEdit);
+      if (updatedEvent) {
+        setClient(prev => prev ? {
+          ...prev,
+          events: (prev.events ?? []).map(e => e.id === updatedEvent.id ? updatedEvent : e)
+        } : prev);
       }
     } catch (err) {
       console.error('Error al actualizar evento:', err);
@@ -235,38 +222,36 @@ const ProspectoView = () => {
     }
   };
 
-  // Manejo de cambios en el formulario de creación de acción
+  // Funciones para acciones
   const handleActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewAction(prev => ({ ...prev, [name]: value }));
   };
 
-  // Crear acción: llama al service y actualiza el estado
   const addAction = async () => {
-    if (!prospecto || !prospecto.id || !newAction.action_date || !newAction.description) return;
-    const prospectoId = prospecto.id as string;
+    if (!client || !client.id || !newAction.action_date || !newAction.description) return;
     try {
-      const accionCreada = await prospectoService.createAction(prospectoId, newAction);
-      if (accionCreada) {
-        setProspecto(prev => ({
-          ...prev!,
-          actions: [...(prev?.actions || []), accionCreada]
-        }));
-        setNewAction({ action_date: "", description: "", next_contact: "", user_id: "1" });
+      const createdAction = await clientesService.createAction(client.id, newAction);
+      if (createdAction) {
+        setClient(prev => prev ? { ...prev, actions: [...(prev.actions ?? []), createdAction] } : prev);
+        setNewAction({ id: '', client_id: '', action_date: '', description: '', next_contact: '', user_id: '1' });
       }
     } catch (err) {
       console.error('Error al crear acción:', err);
     }
   };
 
-  const deleteAction = (actionId: number | string | undefined) => {
-    if (!prospecto || actionId === undefined) return;
-    const updatedActions = (prospecto.actions || []).filter(action => action.id !== actionId);
-    setProspecto({ ...prospecto, actions: updatedActions });
+  const deleteAction = async (actionId: string | number) => {
+    if (!client) return;
+    try {
+      await clientesService.deleteAction(actionId.toString());
+      setClient(prev => prev ? { ...prev, actions: (prev.actions ?? []).filter(a => a.id !== actionId) } : prev);
+    } catch (err) {
+      console.error('Error al eliminar acción:', err);
+    }
   };
 
-  // Abrir modal de edición de acción
-  const handleOpenEditAction = (action: AccionType) => {
+  const handleOpenEditAction = (action: ClientAction) => {
     setActionToEdit(action);
     setEditActionDialogOpen(true);
   };
@@ -279,20 +264,18 @@ const ProspectoView = () => {
   const handleEditActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!actionToEdit) return;
     const { name, value } = e.target;
-    setActionToEdit(prev => prev ? { ...prev, [name]: value } : null);
+    setActionToEdit(prev => prev ? { ...prev, [name]: value } : prev);
   };
 
-  // Guardar cambios en acción editada
   const handleSaveEditedAction = async () => {
-    if (!prospecto || !prospecto.id || !actionToEdit) return;
-    const prospectoId = prospecto.id as string;
+    if (!client || !client.id || !actionToEdit) return;
     try {
-      const accionActualizada = await prospectoService.updateAction(prospectoId, actionToEdit);
-      if (accionActualizada) {
-        setProspecto(prev => ({
-          ...prev!,
-          actions: (prev!.actions || []).map(a => a.id === accionActualizada.id ? accionActualizada : a)
-        }));
+      const updatedAction = await clientesService.updateAction(client.id, actionToEdit);
+      if (updatedAction) {
+        setClient(prev => prev ? {
+          ...prev,
+          actions: (prev.actions ?? []).map(a => a.id === updatedAction.id ? updatedAction : a)
+        } : prev);
       }
     } catch (err) {
       console.error('Error al actualizar acción:', err);
@@ -302,24 +285,54 @@ const ProspectoView = () => {
   };
 
   const handleSaveChanges = async () => {
-    if (!prospecto || !id) return;
+    if (!client || !client.id) return;
     try {
-      const prospectoToSave = {
-        ...prospecto,
-        events: prospecto.events || [],
-        actions: prospecto.actions || [],
-      };
-      const updatedProspect = await prospectoService.updateProspectoFull(id, prospectoToSave, prospecto.events, prospecto.actions);
-      if (updatedProspect) {
-        setProspecto(updatedProspect);
+      const updatedClient = await clientesService.updateClientFull(
+        client.id,
+        client,
+        client.events ?? [],
+        client.actions ?? []
+      );
+      if (updatedClient) {
+        setClient(updatedClient);
       }
     } catch (err) {
       console.error('Error al guardar los cambios:', err);
     }
   };
 
+  // Variables locales para garantizar arrays
+  const events = client?.events ?? [];
+  const actions = client?.actions ?? [];
+
+  // Función para mostrar todos los datos del cliente (excepto events y actions)
+  const renderClientData = () => {
+    if (!client) return null;
+    const excludedKeys = ['events', 'actions'];
+    return (
+      <Paper elevation={0} className={styles.summaryCard}>
+        <Box display="flex" flexDirection="column" gap={1} p={1}>
+          {Object.entries(client).map(([key, value]) => {
+            if (excludedKeys.includes(key)) return null;
+            return (
+              <Box key={key} display="flex" alignItems="center">
+                <Typography variant="caption" color="textSecondary" sx={{ minWidth: '150px' }}>
+                  {key}:
+                </Typography>
+                <Typography variant="body2">
+                  {value !== null && value !== undefined ? value.toString() : '—'}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
+      </Paper>
+    );
+  };
+
   return (
     <div style={fixedHeightStyles.pageContainer}>
+      {/* <Navbar /> */}
       <div style={fixedHeightStyles.headerContainer}>
         <Header />
       </div>
@@ -328,181 +341,56 @@ const ProspectoView = () => {
           <div className={styles.breadcrumb}>
             <span onClick={() => navigate('/crm/clients')}>Inicio</span>
             <span> {'>'} </span>
-            <span onClick={() => navigate('/crm/prospectos')}>Prospectos</span>
+            <span onClick={() => navigate('/crm/clients')}>Clientes</span>
             <span> {'>'} </span>
-            <span>{prospecto?.nombreCliente || 'Detalle'}</span>
+            <span>{client?.nombre || 'Detalle'}</span>
           </div>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Button startIcon={<ArrowBackIcon />} onClick={handleGoBack} size="small">
               Volver
             </Button>
             <div className={styles.countContainer}>
-              <Typography variant="body2">Eventos: {(prospecto?.events || []).length}</Typography>
-              <Typography variant="body2">Acciones: {(prospecto?.actions || []).length}</Typography>
+              <Typography variant="body2">Eventos: {events.length}</Typography>
+              <Typography variant="body2">Acciones: {actions.length}</Typography>
             </div>
           </Box>
           <Typography variant="h5" gutterBottom>
-            {prospecto?.nombreCliente || 'Detalle de Prospecto'}
+            {client?.nombre || 'Detalle de Cliente'}
           </Typography>
-          <Paper elevation={0} style={fixedHeightStyles.summaryCard} className={styles.summaryCard}>
-            <Box display="flex" flexWrap="wrap" gap={2} p={1}>
-              <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Referente</Typography>
-                <Typography variant="body2">{prospecto?.referente || "—"}</Typography>
-              </Box>
-              <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Oficial</Typography>
-                <Typography variant="body2">{prospecto?.oficial || "—"}</Typography>
-              </Box>
-              <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Último contacto</Typography>
-                <Typography variant="body2">{prospecto?.ultimoContacto || "—"}</Typography>
-              </Box>
-              <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Tipo Cliente</Typography>
-                <Typography variant="body2">{prospecto?.tipoCliente || "—"}</Typography>
-              </Box>
-              <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Estado</Typography>
-                <Typography variant="body2">{prospecto?.activo || "—"}</Typography>
-              </Box>
-            </Box>
-          </Paper>
-
-          {prospecto && (
-            <Card style={fixedHeightStyles.formCard}>
-              <Tabs value={activeTab} onChange={handleTabChange} className={styles.tabs} variant="fullWidth">
-                <Tab label="Datos personales" />
+          {/* Mostrar todos los datos del cliente */}
+          {renderClientData()}
+          
+          {client && (
+            <Card className={styles.formCard}>
+              <Tabs value={activeTab} onChange={handleTabChange} variant="fullWidth" className={styles.tabs}>
                 <Tab label="Eventos" />
                 <Tab label="Acciones" />
               </Tabs>
-              <div style={fixedHeightStyles.tabContent}>
+              <div className={styles.tabContent}>
                 {activeTab === 0 && (
-                  <div style={fixedHeightStyles.tabsPanel}>
-                    <div className={styles.formContent}>
-                      <div className={styles.formColumn}>
-                        <TextField
-                          label="Nombre"
-                          value={prospecto.nombreCliente || ''}
-                          fullWidth
-                          margin="normal"
-                          size="small"
-                          onChange={(e) =>
-                            setProspecto({ ...prospecto, nombreCliente: e.target.value })
-                          }
-                        />
-                        <TextField
-                          label="Email / Contacto"
-                          value={prospecto.contacto || ''}
-                          fullWidth
-                          margin="normal"
-                          size="small"
-                          onChange={(e) =>
-                            setProspecto({ ...prospecto, contacto: e.target.value })
-                          }
-                        />
-                        <FormControl fullWidth margin="normal" size="small">
-                          <InputLabel>Estado</InputLabel>
-                          <Select
-                            value={prospecto.activo || 'activo'}
-                            label="Estado"
-                            onChange={(e) =>
-                              setProspecto({ ...prospecto, activo: e.target.value })
-                            }
-                          >
-                            <MenuItem value="activo">Activo</MenuItem>
-                            <MenuItem value="inactivo">Inactivo</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <FormControl fullWidth margin="normal" size="small">
-                          <InputLabel>Tipo de Cliente</InputLabel>
-                          <Select
-                            value={prospecto.activo || 'activo'}
-                            label="Estado"
-                            onChange={(e) =>
-                              setProspecto({ ...prospecto, activo: e.target.value })
-                            }
-                          >
-                            <MenuItem value="activo">Activo</MenuItem>
-                            <MenuItem value="inactivo">Inactivo</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </div>
-                      <div className={styles.formColumn}>
-                        <AsyncSelect
-                          label="Referente"
-                          value={prospecto?.referente || ''}
-                          onChange={(newValue) =>
-                            setProspecto(prev => (prev ? { ...prev, referente: newValue } : prev))
-                          }
-                          fetchOptions={getUsers}
-                        />
-                        <AsyncSelect
-                          label="Oficial"
-                          value={prospecto?.oficial || ''}
-                          onChange={(newValue) =>
-                            setProspecto(prev => (prev ? { ...prev, oficial: newValue } : prev))
-                          }
-                          fetchOptions={getUsers}
-                        />
-                        <TextField
-                          label="Último contacto"
-                          type="date"
-                          value={prospecto.ultimoContacto || ''}
-                          fullWidth
-                          margin="normal"
-                          size="small"
-                          InputLabelProps={{ shrink: true }}
-                          onChange={(e) =>
-                            setProspecto({ ...prospecto, ultimoContacto: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <Divider sx={{ my: 2 }} />
-                    <div className={styles.formActions}>
-                      <Button variant="outlined" onClick={handleGoBack} size="small">
-                        Cancelar
-                      </Button>
-                      <Button variant="contained" color="primary" onClick={handleSaveChanges} size="small">
-                        Guardar
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {activeTab === 1 && (
-                  <div style={fixedHeightStyles.tabsPanel}>
+                  <Box sx={{ p: 2 }}>
                     <Typography variant="subtitle1" gutterBottom>
-                      Eventos ({(prospecto.events || []).length})
+                      Eventos ({events.length})
                     </Typography>
-
-                    <div style={fixedHeightStyles.listContainer}>
-                      {(prospecto.events || []).length > 0 ? (
-                        (prospecto.events || []).map((event) => (
-                          <Card key={event.id ?? Math.random()} variant="outlined" sx={{ mb: 1, p: 1 }}>
+                    <Box className={styles.listContainer}>
+                      {events.length > 0 ? (
+                        events.map(event => (
+                          <Card key={event.id} variant="outlined" sx={{ mb: 1, p: 1 }}>
                             <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                              <div>
-                                <Typography variant="subtitle2">
-                                  Fecha: {event.event_date}
-                                </Typography>
-                                <Typography variant="body2" mt={0.5}>
-                                  {event.description}
-                                </Typography>
+                              <Box>
+                                <Typography variant="subtitle2">Fecha: {event.event_date}</Typography>
+                                <Typography variant="body2" mt={0.5}>{event.description}</Typography>
                                 {event.next_contact && (
                                   <Typography variant="caption" color="primary" display="block">
                                     Próximo evento: {event.next_contact}
                                   </Typography>
                                 )}
-                              </div>
+                              </Box>
                               <Box>
                                 <IconButton size="small" onClick={() => handleOpenEditEvent(event)}>
                                   <EditIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => event.id !== undefined && deleteEvent(event.id)}
-                                >
+                                <IconButton size="small" color="error" onClick={() => deleteEvent(event.id)}>
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </Box>
@@ -510,18 +398,16 @@ const ProspectoView = () => {
                           </Card>
                         ))
                       ) : (
-                        <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', my: 2 }}>
+                        <Typography variant="body2" color="textSecondary" align="center" sx={{ my: 2 }}>
                           No hay eventos registrados
                         </Typography>
                       )}
-                    </div>
-
-                    <div style={fixedHeightStyles.addForm}>
+                    </Box>
+                    <Box className={styles.addForm}>
                       <Typography variant="subtitle2" gutterBottom>
                         <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
                         Agregar nuevo evento
                       </Typography>
-
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         <TextField
                           label="Fecha"
@@ -531,9 +417,8 @@ const ProspectoView = () => {
                           onChange={handleEventChange}
                           size="small"
                           InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
+                          sx={{ width: '33%' }}
                         />
-
                         <TextField
                           label="Próximo evento"
                           name="next_contact"
@@ -542,19 +427,17 @@ const ProspectoView = () => {
                           onChange={handleEventChange}
                           size="small"
                           InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
+                          sx={{ width: '33%' }}
                         />
-
                         <AsyncSelect
                           label="Asignado"
                           value={newEvent.user_id}
                           onChange={(newValue) =>
                             setNewEvent(prev => ({ ...prev, user_id: newValue }))
                           }
-                          fetchOptions={getUsers}
+                          fetchOptions={clientesService.getUsers}
                         />
                       </Box>
-
                       <TextField
                         label="Descripción"
                         name="description"
@@ -566,7 +449,6 @@ const ProspectoView = () => {
                         size="small"
                         sx={{ mt: 1 }}
                       />
-
                       <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
                         <Button
                           variant="contained"
@@ -579,42 +461,33 @@ const ProspectoView = () => {
                           Agregar
                         </Button>
                       </Box>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
-                {activeTab === 2 && (
-                  <div style={fixedHeightStyles.tabsPanel}>
+                {activeTab === 1 && (
+                  <Box sx={{ p: 2 }}>
                     <Typography variant="subtitle1" gutterBottom>
-                      Acciones ({(prospecto.actions || []).length})
+                      Acciones ({actions.length})
                     </Typography>
-
-                    <div style={fixedHeightStyles.listContainer}>
-                      {(prospecto.actions || []).length > 0 ? (
-                        (prospecto.actions || []).map((action) => (
-                          <Card key={action.id ?? Math.random()} variant="outlined" sx={{ mb: 1, p: 1 }}>
+                    <Box className={styles.listContainer}>
+                      {actions.length > 0 ? (
+                        actions.map(action => (
+                          <Card key={action.id} variant="outlined" sx={{ mb: 1, p: 1 }}>
                             <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                              <div>
-                                <Typography variant="subtitle2">
-                                  Fecha: {action.action_date}
-                                </Typography>
-                                <Typography variant="body2" mt={0.5}>
-                                  {action.description}
-                                </Typography>
+                              <Box>
+                                <Typography variant="subtitle2">Fecha: {action.action_date}</Typography>
+                                <Typography variant="body2" mt={0.5}>{action.description}</Typography>
                                 {action.next_contact && (
                                   <Typography variant="caption" color="primary" display="block">
-                                    Vencimiento de la acción: {action.next_contact}
+                                    Vencimiento: {action.next_contact}
                                   </Typography>
                                 )}
-                              </div>
+                              </Box>
                               <Box>
                                 <IconButton size="small" onClick={() => handleOpenEditAction(action)}>
                                   <EditIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => action.id !== undefined && deleteAction(action.id)}
-                                >
+                                <IconButton size="small" color="error" onClick={() => deleteAction(action.id)}>
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </Box>
@@ -622,18 +495,16 @@ const ProspectoView = () => {
                           </Card>
                         ))
                       ) : (
-                        <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', my: 2 }}>
+                        <Typography variant="body2" color="textSecondary" align="center" sx={{ my: 2 }}>
                           No hay acciones registradas
                         </Typography>
                       )}
-                    </div>
-
-                    <div style={fixedHeightStyles.addForm}>
+                    </Box>
+                    <Box className={styles.addForm}>
                       <Typography variant="subtitle2" gutterBottom>
                         <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
                         Agregar nueva acción
                       </Typography>
-
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         <TextField
                           label="Fecha"
@@ -643,30 +514,27 @@ const ProspectoView = () => {
                           onChange={handleActionChange}
                           size="small"
                           InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
+                          sx={{ width: '33%' }}
                         />
-
                         <TextField
-                          label="Vencimiento de la acción"
+                          label="Vencimiento"
                           name="next_contact"
                           type="date"
                           value={newAction.next_contact}
                           onChange={handleActionChange}
                           size="small"
                           InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
+                          sx={{ width: '33%' }}
                         />
-
                         <AsyncSelect
                           label="Asignado"
                           value={newAction.user_id}
                           onChange={(newValue) =>
                             setNewAction(prev => ({ ...prev, user_id: newValue }))
                           }
-                          fetchOptions={getUsers}
+                          fetchOptions={clientesService.getUsers}
                         />
                       </Box>
-
                       <TextField
                         label="Descripción"
                         name="description"
@@ -678,7 +546,6 @@ const ProspectoView = () => {
                         size="small"
                         sx={{ mt: 1 }}
                       />
-
                       <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
                         <Button
                           variant="contained"
@@ -691,8 +558,8 @@ const ProspectoView = () => {
                           Agregar
                         </Button>
                       </Box>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
               </div>
             </Card>
@@ -715,7 +582,7 @@ const ProspectoView = () => {
             InputLabelProps={{ shrink: true }}
           />
           <TextField
-            label="Vencimiento de la acción"
+            label="Vencimiento"
             name="next_contact"
             type="date"
             value={eventToEdit?.next_contact || ''}
@@ -730,7 +597,7 @@ const ProspectoView = () => {
             onChange={(newValue) =>
               setEventToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
             }
-            fetchOptions={getUsers}
+            fetchOptions={clientesService.getUsers}
           />
           <TextField
             label="Descripción"
@@ -766,7 +633,7 @@ const ProspectoView = () => {
             InputLabelProps={{ shrink: true }}
           />
           <TextField
-            label="Vencimiento de la acción"
+            label="Vencimiento"
             name="next_contact"
             type="date"
             value={actionToEdit?.next_contact || ''}
@@ -781,7 +648,7 @@ const ProspectoView = () => {
             onChange={(newValue) =>
               setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
             }
-            fetchOptions={getUsers}
+            fetchOptions={clientesService.getUsers}
           />
           <TextField
             label="Descripción"
@@ -805,4 +672,4 @@ const ProspectoView = () => {
   );
 };
 
-export default ProspectoView;
+export default ClientView;

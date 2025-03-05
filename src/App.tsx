@@ -7,6 +7,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import Dashboard from "./pages/Clients/Clients";
+import ClientView from "./pages/Clients/ClientView";
 import ProspectList from "./pages/Prospects/ProspectList";
 import ProspectoView from './pages/Prospects/ProspectoView';
 import '@mui/material/styles';
@@ -38,9 +39,14 @@ function App() {
         metaDescription = "Lista de prospectos disponibles";
         favicon = "/menu-act.svg";
         break;
-        case "/crm/prospectos/detalle/:id":
+      case "/crm/prospectos/detalle/:id":
         title = "Detalles de Prospectos";
         metaDescription = "prospectos";
+        favicon = "/menu-act.svg";
+        break;
+      case "/crm/clients/details/:numcomitente":
+        title = "Detalles de Cliente";
+        metaDescription = "Cliente";
         favicon = "/menu-act.svg";
         break;
     }
@@ -71,9 +77,10 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/crm/clientes" element={<Dashboard />} />
+      <Route path="/crm/clients" element={<Dashboard />} />
       <Route path="/crm/prospectos" element={<ProspectList />} />
       <Route path="/crm/prospectos/detalle/:id" element={<ProspectoView />} />
+      <Route path="/crm/clients/details/:numcomitente" element={<ClientView />} />
     </Routes>
   );
 }

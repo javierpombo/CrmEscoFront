@@ -301,7 +301,7 @@ export const prospectoService = {
 // Para mantener compatibilidad con código existente
 export async function getContacts() {
   try {
-    const url = `${API_BASE_URL}/clients/active/1`;
+    const url = `${API_BASE_URL}/clients/1`;
     console.log(`Obteniendo contactos desde ${url}`);
     
     const response = await axios.get(url);
@@ -312,6 +312,51 @@ export async function getContacts() {
     console.error('Error al obtener contactos:', error);
     return [];
   }
+}
+
+
+export async function getClients(
+  page: number = 1, 
+  filter: 'todos' | 'activos' | 'inactivos' = 'todos'
+) {
+  let endpoint = '';
+  if (filter === 'activos') {
+    endpoint = `/clients/active/${page}`;
+  } else if (filter === 'inactivos') {
+    endpoint = `/clients/inactive/${page}`;
+  } else {
+    endpoint = `/clients/${page}`;
+  }
+
+  const response = await axios.get(`${API_BASE_URL}${endpoint}`);
+
+  // La respuesta de Laravel tiene la siguiente estructura:
+  // { current_page, data: [...], last_page, total, ... }
+
+  // Realizamos el mapeo de cada item para que tenga los campos que usa el front.
+  const transformedData = response.data.data.map((item: any, index: number) => ({
+    id: item.Numero || String(index + 1),
+    numcomitente: item.CodComitente || '-',
+    nombre: item.Descripcion || '-',
+    sector: item.Actividad || '-',
+    // Si el campo Oficial tiene comas, nos quedamos con el primer valor:
+    oficial: item.Oficial ? item.Oficial.split(',')[0] : '-',
+    // Lo mismo para Referente:
+    referente: item.Referente ? item.Referente.split(',')[0] : '-',
+    cuit: item.CUIT || '-',
+    mail: item.EMail || '-',
+    // Consideramos activo si EstaAnulado es "0"
+    activo: item.EstaAnulado === "0"
+  }));
+
+  return {
+    data: transformedData,
+    pagination: {
+      currentPage: response.data.current_page,
+      lastPage: response.data.last_page,
+      total: response.data.total,
+    }
+  };
 }
 
 export default prospectoService;
