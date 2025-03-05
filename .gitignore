@@ -5,6 +5,11 @@
 /.pnp
 .pnp.js
 
+crm.acqit.crt
+crm.acqit.key
+Dockerfile
+settings.conf
+
 # testing
 /coverage
 

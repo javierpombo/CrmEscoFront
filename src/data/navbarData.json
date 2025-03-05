@@ -2,27 +2,7 @@
     {
       "id": 1,
       "text": "Home",
-      "link": "/"
-    },
-    {
-      "id": 2,
-      "text": "Wiki",
-      "link": "/wiki"
-    },
-    {
-      "id": 3,
-      "text": "Backlog",
-      "link": "/backlog"
-    },
-    {
-      "id": 4,
-      "text": "RRHH",
-      "link": "/rrhh"
-    },
-    {
-      "id": 5,
-      "text": "Inversiones",
-      "link": "/inversiones"
+      "link": "https://datascopeqa.davalores.com.ar/home"
     },
     {
       "id": 6,
