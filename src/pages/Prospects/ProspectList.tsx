@@ -417,7 +417,6 @@ const ProspectList: React.FC = () => {
           />
         </div>
 
-        {/* Modal para Nuevo Prospecto - SIMPLIFICADO */}
         <Modal
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}

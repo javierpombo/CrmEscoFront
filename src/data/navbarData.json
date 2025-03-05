@@ -37,11 +37,6 @@
           "id": 602,
           "text": "Clientes",
           "link": "/crm/clientes"
-        },
-        {
-          "id": 603,
-          "text": "Reportes",
-          "link": "/crm/reportes"
         }
       ]
     }

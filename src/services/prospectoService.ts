@@ -95,19 +95,21 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
   // Convertir eventos del backend al tipo del frontend
   const mappedEvents: EventoType[] = (prospect.events || []).map(e => ({
     id: e.id,
-    prospect_id: e.prospect_id,
+    prospect_id: e.prospect_id.toString(), 
     event_date: e.event_date,
     description: e.description,
-    next_contact: e.next_contact
+    next_contact: e.next_contact,
+    user_id: (e as any).user_id || '1'  
   }));
-
+  
   // Convertir acciones del backend al tipo del frontend
   const mappedActions: AccionType[] = (prospect.actions || []).map(a => ({
     id: a.id,
-    prospect_id: a.prospect_id,
+    prospect_id: a.prospect_id.toString(), 
     action_date: a.action_date,
     description: a.description,
-    next_contact: a.next_contact
+    next_contact: a.next_contact,
+    user_id: (a as any).user_id || '1'  
   }));
 
   return {
@@ -313,9 +315,9 @@ export const prospectoService = {
       }
       
       const url = `${API_BASE_URL}/prospects/${id}`;
-      console.log(`Realizando petición PUT a ${url} con datos:`, backendData);
+      console.log(`Realizando petición post a ${url} con datos:`, backendData);
       
-      const response = await axios.put(url, backendData);
+      const response = await axios.post(url, backendData);
       console.log('Respuesta al actualizar prospecto:', response.data);
       
       if (response.data && response.data.prospect) {
@@ -374,7 +376,56 @@ export const prospectoService = {
       console.error(`Error al eliminar prospecto con id ${id}:`, error);
       return false;
     }
-  }
+  },
+  async createEvent(prospectId: string, event: EventoType): Promise<EventoType | null> {
+    try {
+      const url = `${API_BASE_URL}/prospects/${prospectId}/events/create`;
+      const response = await axios.post(url, event);
+      console.log('Evento creado:', response.data);
+      return response.data.event;
+    } catch (error) {
+      console.error('Error al crear evento:', error);
+      return null;
+    }
+  },
+
+  async updateEvent(prospectId: string, event: EventoType): Promise<EventoType | null> {
+    try {
+      const url = `${API_BASE_URL}/prospects/${prospectId}/events/update`;
+      const response = await axios.post(url, event);
+      console.log('Evento actualizado:', response.data);
+      return response.data.event;
+    } catch (error) {
+      console.error('Error al actualizar evento:', error);
+      return null;
+    }
+  },
+  async createAction(prospectId: string, action: AccionType): Promise<AccionType | null> {
+    try {
+      const url = `${API_BASE_URL}/prospects/${prospectId}/actions/create`;
+      const response = await axios.post(url, action);
+      console.log('Acción creada:', response.data);
+      // Se asume que el backend devuelve el objeto acción en response.data.action
+      return response.data.action;
+    } catch (error) {
+      console.error('Error al crear acción:', error);
+      return null;
+    }
+  },
+  
+  async updateAction(prospectId: string, action: AccionType): Promise<AccionType | null> {
+    try {
+      const url = `${API_BASE_URL}/prospects/${prospectId}/actions/update`;
+      const response = await axios.post(url, action);
+      console.log('Acción actualizada:', response.data);
+      // Se asume que el backend devuelve el objeto acción en response.data.action
+      return response.data.action;
+    } catch (error) {
+      console.error('Error al actualizar acción:', error);
+      return null;
+    }
+  },
+
 };
 
 // Para mantener compatibilidad con código existente

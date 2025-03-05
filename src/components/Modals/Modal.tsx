@@ -17,7 +17,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
-  maxWidth = 900,
+  maxWidth = 1200,
   fullWidth = false,
   className = ''
 }) => {

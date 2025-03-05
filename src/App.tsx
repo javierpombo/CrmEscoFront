@@ -36,12 +36,12 @@ function App() {
       case "/crm/prospectos":
         title = "Lista de Prospectos";
         metaDescription = "Lista de prospectos disponibles";
-        favicon = "/menu-act.svg"; // ✅ Ruta correcta
+        favicon = "/menu-act.svg";
         break;
         case "/crm/prospectos/detalle/:id":
         title = "Detalles de Prospectos";
         metaDescription = "prospectos";
-        favicon = "/menu-act.svg"; // ✅ Ruta correcta
+        favicon = "/menu-act.svg";
         break;
     }
 

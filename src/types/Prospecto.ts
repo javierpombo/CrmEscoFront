@@ -5,10 +5,11 @@
  */
 export interface EventoType {
   id?: number | string;
-  prospect_id?: number | string;
+  prospect_id?: string;
   event_date: string | null;
   description: string | null;
   next_contact: string | null;
+  user_id: string;
 }
 
 /**
@@ -20,6 +21,7 @@ export interface AccionType {
   action_date: string | null;
   description: string | null;
   next_contact: string | null;
+  user_id: string;
 }
 
 /**
@@ -31,8 +33,8 @@ export interface Prospecto {
   nombreCliente: string;          // Nombre del cliente o empresa
   contacto: string;               // Información de contacto principal
   tipoCliente: string;            // Tipo de cliente (Particular, Empresa, etc.)
-  oficial: string;                // Oficial asignado
-  referente: string;              // Persona que refirió al prospecto
+  oficial?: string;                // Oficial asignado
+  referente?: string;              // Persona que refirió al prospecto
   ultimoContacto: string | null;  // Fecha del último contacto
   fechaVencimiento: string | null; // Fecha de vencimiento para próxima acción
   tipoAccion: string;             // Tipo de acción pendiente
