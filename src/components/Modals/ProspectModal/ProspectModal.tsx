@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { 
-  Button, 
-  TextField, 
-  MenuItem, 
-  FormControl, 
-  Select, 
-  InputLabel, 
-  FormControlLabel, 
-  Checkbox, 
+import {
+  Button,
+  TextField,
+  MenuItem,
+  FormControl,
+  Select,
+  InputLabel,
+  FormControlLabel,
+  Checkbox,
   Grid,
   InputAdornment,
-  SelectChangeEvent, 
+  SelectChangeEvent,
   CircularProgress
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -65,17 +65,17 @@ const emptyProspectData: Omit<Prospecto, 'id'> = {
   notas: ''
 };
 
-export const ProspectForm: React.FC<ProspectFormProps> = ({ 
-  onSubmit, 
-  onCancel 
+export const ProspectForm: React.FC<ProspectFormProps> = ({
+  onSubmit,
+  onCancel
 }) => {
   // Estados para manejar el formulario
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Estado principal del formulario - Siempre empezamos con un formulario vacío
   const [formData, setFormData] = useState<Omit<Prospecto, 'id'>>(emptyProspectData);
-  
+
   // Manejar cambios en los campos del formulario
   const handleChange = (field: keyof Prospecto, value: any) => {
     setFormData((prev) => ({
@@ -95,11 +95,11 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       // Asegurarse de no enviar un ID
       const newProspectData = { ...formData };
-      
+
       // Llamar al callback de creación
       onSubmit(newProspectData);
     } catch (err) {
@@ -117,7 +117,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
             {error}
           </div>
         )}
-        
+
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <TextField
@@ -131,7 +131,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               size="small"
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <TextField
               label="Contacto"
@@ -144,7 +144,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               size="small"
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <FormControl fullWidth size="small">
               <InputLabel>Oficial</InputLabel>
@@ -162,7 +162,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <FormControl fullWidth size="small">
               <InputLabel>Referente</InputLabel>
@@ -180,7 +180,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <FormControl fullWidth size="small">
               <InputLabel>Tipo de Cliente</InputLabel>
@@ -198,7 +198,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <DatePicker
               label="Último Contacto"
@@ -206,7 +206,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               onChange={(date) => handleChange('ultimoContacto', date)}
             />
           </Grid>
-          
+
           <Grid item xs={12}>
             <TextField
               label="Notas"
@@ -239,6 +239,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               value={stringToDate(formData.fechaVencimiento)}
               onChange={(date) => handleChange('fechaVencimiento', date)}
             />
+
           </Grid>
 
           {/* Campos adicionales */}
@@ -257,7 +258,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
           <Grid item xs={12} md={6}>
             <FormControlLabel
               control={
-                <Checkbox 
+                <Checkbox
                   checked={formData.yaEsCliente || false}
                   onChange={(e) => handleChange('yaEsCliente', e.target.checked)}
                 />
@@ -266,20 +267,20 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
             />
           </Grid>
         </Grid>
-        
+
         <div className={styles.formActions}>
-          <Button 
-            variant="outlined" 
-            color="inherit" 
+          <Button
+            variant="outlined"
+            color="inherit"
             onClick={onCancel}
             disabled={isSubmitting}
           >
             Cancelar
           </Button>
-          
-          <Button 
-            type="submit" 
-            variant="contained" 
+
+          <Button
+            type="submit"
+            variant="contained"
             color="primary"
             disabled={isSubmitting}
           >

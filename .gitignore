@@ -7,8 +7,8 @@
 
 crm.acqit.crt
 crm.acqit.key
-Dockerfile
-settings.conf
+# Dockerfile
+# settings.conf
 
 # testing
 /coverage

@@ -1,3 +1,4 @@
+// Modal.tsx
 import React from 'react';
 import { Modal as MUIModal, Box, Typography } from '@mui/material';
 import styles from './Modal.module.css';
@@ -17,7 +18,8 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
-  maxWidth = 1200,
+  // Ajusta el valor por defecto si quieres un modal más angosto:
+  maxWidth = 700, 
   fullWidth = false,
   className = ''
 }) => {
@@ -28,20 +30,16 @@ export const Modal: React.FC<ModalProps> = ({
       aria-labelledby="generic-modal-title"
       className={`${styles.modal} ${className}`}
     >
-      <Box 
+      <Box
         className={styles.modalContent}
-        sx={{ 
+        sx={{
           maxWidth: fullWidth ? '100%' : maxWidth,
           width: fullWidth ? '100%' : 'auto'
         }}
       >
         {title && (
           <div className={styles.modalHeader}>
-            <Typography 
-              id="generic-modal-title" 
-              variant="h6" 
-              component="h2"
-            >
+            <Typography id="generic-modal-title" variant="h6" component="h2">
               {title}
             </Typography>
           </div>

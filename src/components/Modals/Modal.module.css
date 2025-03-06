@@ -1,3 +1,4 @@
+/* Modal.module.css */
 .modal {
   display: flex;
   align-items: center;
@@ -25,7 +26,7 @@
 }
 
 .modalBody {
-  padding: 0;
+  padding: 1rem; /* Agrega algo de padding aquí */
 }
 
 @media (max-width: 600px) {
