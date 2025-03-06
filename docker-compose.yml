@@ -1,11 +1,11 @@
-version: "3.7"
+
 services:
   front:
     image: ${IMAGEN_FRONT}
     restart: always
     ports:
       - "${PORT_FRONT}:443"
-      - "${PORT_BACKEND_ALTERNATIVO}:80"
+      - "${PORT_FRONT_ALTERNATIVO}:80"
     networks:
       - crm
     depends_on:
