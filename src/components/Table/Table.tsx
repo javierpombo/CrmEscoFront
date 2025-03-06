@@ -4,6 +4,7 @@ import styles from './Table.module.css';
 interface Column {
   label: string;
   field: string;
+  render?: (row: any) => React.ReactNode;
 }
 
 interface TableProps {
@@ -31,7 +32,7 @@ const Table: React.FC<TableProps> = ({ data, columns }) => {
         </span>
       );
     }
-    
+
     // Para campo 'Estado' que puede ser un string "Activo"
     if (field === 'estado') {
       if (value === 'Activo' || value === 'activo') {
@@ -88,7 +89,10 @@ const Table: React.FC<TableProps> = ({ data, columns }) => {
             <tr key={rowIndex} className={styles.tableRow}>
               {columns.map((col, colIndex) => (
                 <td key={colIndex} className={styles.tableCell}>
-                  {formatCellValue(row[col.field], col.field)}
+                  {col.render
+                    ? col.render(row)
+                    : formatCellValue(row[col.field], col.field)
+                  }
                 </td>
               ))}
             </tr>

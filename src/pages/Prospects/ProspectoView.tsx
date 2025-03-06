@@ -28,7 +28,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Header from '../../components/Header/Header';
 import { prospectoService } from '../../services/prospectoService';
 import { Prospecto, EventoType, AccionType } from '../../types/Prospecto';
-import AsyncSelect from '../../components/AsyncSelect';
+import AsyncSelect from '../../components/AsyncSelect/AsyncSelect';
 import { getUsers } from '../../services/apiService';
 import { getUserNameById } from '../../services/userService';
 

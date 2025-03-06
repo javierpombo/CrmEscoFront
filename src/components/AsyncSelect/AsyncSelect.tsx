@@ -13,6 +13,7 @@ export interface AsyncSelectProps<T extends OptionType> {
   onChange: (value: string) => void;
   fetchOptions: () => Promise<T[]>;
   getOptionLabel?: (option: T) => string;
+  placeholder?: string;
 }
 
 const AsyncSelect = <T extends OptionType>({

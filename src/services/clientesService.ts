@@ -258,11 +258,11 @@ export const clientesService = {
     }
   },
 
-  async getEventsByClientId(clientId: string): Promise<ClientEvent[]> {
+  async getEventsByCodComitente(cod: string): Promise<ClientEvent[]> {
     try {
-      const url = `${API_BASE_URL}/clients/${clientId}/events`; // Asegúrate que este endpoint exista
+      const url = `${API_BASE_URL}/clients/${cod}/events`;
       const response = await axios.get(url);
-      // Supongamos que la respuesta tiene { data: [...] }
+      // Se asume que la respuesta es { data: [...] }
       return response.data.data || [];
     } catch (error) {
       console.error('Error al obtener eventos:', error);
@@ -270,9 +270,9 @@ export const clientesService = {
     }
   },
   
-  async getActionsByClientId(clientId: string): Promise<ClientAction[]> {
+  async getActionsByCodComitente(cod: string): Promise<ClientAction[]> {
     try {
-      const url = `${API_BASE_URL}/clients/${clientId}/actions`; // Asegúrate que este endpoint exista
+      const url = `${API_BASE_URL}/clients/${cod}/actions`;
       const response = await axios.get(url);
       return response.data.data || [];
     } catch (error) {

@@ -272,7 +272,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               />
             </Grid>
             
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <Typography variant="h6" className={styles.sectionTitle}>
                 Información Adicional
               </Typography>
@@ -365,7 +365,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
                   className: styles.textareaField
                 }}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
           
           <div className={styles.formActions}>

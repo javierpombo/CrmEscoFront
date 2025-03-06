@@ -1,6 +1,6 @@
 // src/services/apiService.ts
 import axios from 'axios';
-import { OptionType } from '../components/AsyncSelect';
+import { OptionType } from '../components/AsyncSelect/AsyncSelect';
 
 // Por ejemplo, para obtener usuarios:
 export const getUsers = async (): Promise<OptionType[]> => {

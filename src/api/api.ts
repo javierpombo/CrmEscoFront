@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { Prospecto } from '../types/Prospecto';
+import { User } from '../types/User';
 
 // URL base de la API - Verifica que esta URL sea correcta
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
@@ -38,6 +39,8 @@ interface BackendProspect {
   last_contact: string | null;
   events?: BackendEvent[];
   actions?: BackendAction[];
+  official_user?: any;
+  referent_user?: any;
 }
 
 interface BackendEvent {
@@ -93,12 +96,14 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     numComitente: '',  // Ajusta si en el futuro viene desde el backend
     yaEsCliente: false, 
     tipoClienteAccion: '',
-    activo: 'activo', 
-    // Por ejemplo, concatenamos las descripciones de todos los events:
+    activo: 'activo',
     notas: (prospect.events || [])
       .map(e => e.description)
       .filter(Boolean)
-      .join(', ')
+      .join(', '),
+    // Asigna los objetos completos de usuario:
+    officialUser: prospect.official_user,
+    referentUser: prospect.referent_user
   };
 }
 
@@ -144,7 +149,7 @@ export async function testApiConnection() {
 // Servicio principal para Prospectos
 export const prospectoService = {
   // Obtener lista de prospectos con paginación
-  async getProspectos(page = 1): Promise<{
+  async getProspectos(page = 1, status: string = 'todos'): Promise<{
     data: Prospecto[];
     pagination: {
       currentPage: number;
@@ -153,32 +158,20 @@ export const prospectoService = {
     };
   }> {
     try {
-      const url = `${API_BASE_URL}/prospects/${page}`;
-      console.log(`Realizando petición GET a ${url}`);
-      
+      const url = `${API_BASE_URL}/prospects/${page}?status=${status}`;
       const response = await axios.get<PaginatedResponse<BackendProspect>>(url);
-      console.log('Datos paginados recibidos:', response.data);
-      
       const prospectos = response.data.data.map(mapBackendProspectToFrontend);
       const pagination = {
         currentPage: response.data.current_page,
         lastPage: response.data.last_page,
-        total: response.data.total
+        total: response.data.total,
       };
-      
-      return { 
-        data: prospectos, 
-        pagination
-      };
+      return { data: prospectos, pagination };
     } catch (error) {
       console.error('Error al obtener prospectos:', error);
-      return { 
-        data: [], 
-        pagination: {
-          currentPage: 1,
-          lastPage: 1,
-          total: 0
-        }
+      return {
+        data: [],
+        pagination: { currentPage: 1, lastPage: 1, total: 0 },
       };
     }
   },
