@@ -1,0 +1,26 @@
+version: "3.7"
+services:
+  front:
+    image: ${IMAGEN_FRONT}
+    restart: always
+    ports:
+      - "${PORT_FRONT}:443"
+      - "${PORT_BACKEND_ALTERNATIVO}:80"
+    networks:
+      - crm
+    depends_on:
+      - backend
+  backend:
+    image: ${IMAGEN_BACKEND}
+    restart: always
+    ports:
+      - "${PORT_BACKEND}:443"
+      - "${PORT_BACKEND_ALTERNATIVO}:80"
+    env_file:
+      - .env
+    networks:
+      - crm
+
+networks:
+  crm:
+    driver: bridge
