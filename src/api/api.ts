@@ -5,7 +5,7 @@ import { Prospecto } from '../types/Prospecto';
 import { User } from '../types/User';
 
 // URL base de la API - Verifica que esta URL sea correcta
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'https://apicrm.acqit.com.ar:8000/api';
 // https://apicrm.acqit.com.ar:8000/api// https://apicrm.acqit.com.ar:8000/api
 // Configura axios para mostrar más información en caso de error
 axios.interceptors.request.use(request => {
