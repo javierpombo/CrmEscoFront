@@ -23,10 +23,6 @@ export interface AccionType {
   user_id: string;
 }
 
-/**
- * Interfaz que define la estructura de un prospecto en el frontend.
- * Los nombres de los campos están en español para mantener consistencia con la UI.
- */
 export interface Prospecto {
   id?: string;
   nombreCliente: string;

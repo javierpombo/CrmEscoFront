@@ -24,6 +24,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { FormControlLabel, Checkbox } from '@mui/material';
+
 
 import Header from '../../components/Header/Header';
 import { prospectoService } from '../../services/prospectoService';
@@ -103,14 +105,14 @@ const ProspectoView = () => {
     description: string;
     next_contact: string;
     user_id: string;
-  }>({ event_date: "", description: "", next_contact: "", user_id: "1" });
+  }>({ event_date: "", description: "", next_contact: "", user_id: "" });
 
   const [newAction, setNewAction] = useState<{
     action_date: string;
     description: string;
     next_contact: string;
     user_id: string;
-  }>({ action_date: "", description: "", next_contact: "", user_id: "1" });
+  }>({ action_date: "", description: "", next_contact: "", user_id: "" });
 
   // Estados para editar evento mediante modal
   const [editEventDialogOpen, setEditEventDialogOpen] = useState<boolean>(false);
@@ -185,7 +187,7 @@ const ProspectoView = () => {
           ...prev!,
           events: [...(prev?.events || []), eventoCreado]
         }));
-        setNewEvent({ event_date: "", description: "", next_contact: "", user_id: "1" });
+        setNewEvent({ event_date: "", description: "", next_contact: "", user_id: "" });
       }
     } catch (err) {
       console.error('Error al crear evento:', err);
@@ -252,7 +254,7 @@ const ProspectoView = () => {
           ...prev!,
           actions: [...(prev?.actions || []), accionCreada]
         }));
-        setNewAction({ action_date: "", description: "", next_contact: "", user_id: "1" });
+        setNewAction({ action_date: "", description: "", next_contact: "", user_id: "" });
       }
     } catch (err) {
       console.error('Error al crear acción:', err);
@@ -309,7 +311,12 @@ const ProspectoView = () => {
         events: prospecto.events || [],
         actions: prospecto.actions || [],
       };
-      const updatedProspect = await prospectoService.updateProspectoFull(id, prospectoToSave, prospecto.events, prospecto.actions);
+      const updatedProspect = await prospectoService.updateProspectoFull(
+        id,
+        prospectoToSave,
+        prospecto.events,
+        prospecto.actions
+      );
       if (updatedProspect) {
         setProspecto(updatedProspect);
       }
@@ -317,6 +324,7 @@ const ProspectoView = () => {
       console.error('Error al guardar los cambios:', err);
     }
   };
+
 
   return (
     <div style={fixedHeightStyles.pageContainer}>
@@ -346,14 +354,15 @@ const ProspectoView = () => {
           </Typography>
           <Paper elevation={0} style={fixedHeightStyles.summaryCard} className={styles.summaryCard}>
             <Box display="flex" flexWrap="wrap" gap={2} p={1}>
-              <Box className={styles.infoItem}>
+              {/* <Box className={styles.infoItem}>
                 <Typography variant="caption" color="textSecondary">Referente</Typography>
                 <Typography variant="body2">{prospecto?.referente || "—"}</Typography>
               </Box>
               <Box className={styles.infoItem}>
                 <Typography variant="caption" color="textSecondary">Oficial</Typography>
                 <Typography variant="body2">{prospecto?.oficial || "—"}</Typography>
-              </Box>
+              </Box> */}
+
               <Box className={styles.infoItem}>
                 <Typography variant="caption" color="textSecondary">Último contacto</Typography>
                 <Typography variant="body2">{prospecto?.ultimoContacto || "—"}</Typography>
@@ -362,23 +371,24 @@ const ProspectoView = () => {
                 <Typography variant="caption" color="textSecondary">Tipo Cliente</Typography>
                 <Typography variant="body2">{prospecto?.tipoCliente || "—"}</Typography>
               </Box>
-              <Box className={styles.infoItem}>
+              {/* <Box className={styles.infoItem}>
                 <Typography variant="caption" color="textSecondary">Estado</Typography>
                 <Typography variant="body2">{prospecto?.activo || "—"}</Typography>
-              </Box>
+              </Box> */}
             </Box>
           </Paper>
 
           {prospecto && (
             <Card style={fixedHeightStyles.formCard}>
               <Tabs value={activeTab} onChange={handleTabChange} className={styles.tabs} variant="fullWidth">
-                <Tab label="Datos personales" />
+                <Tab label="Datos del Prospecto" />
                 <Tab label="Eventos" />
                 <Tab label="Acciones" />
               </Tabs>
               <div style={fixedHeightStyles.tabContent}>
                 {activeTab === 0 && (
                   <div style={fixedHeightStyles.tabsPanel}>
+                    {/* ... dentro de {activeTab === 0 && (...) } ... */}
                     <div className={styles.formContent}>
                       <div className={styles.formColumn}>
                         <TextField
@@ -391,6 +401,7 @@ const ProspectoView = () => {
                             setProspecto({ ...prospecto, nombreCliente: e.target.value })
                           }
                         />
+
                         <TextField
                           label="Email / Contacto"
                           value={prospecto.contacto || ''}
@@ -401,7 +412,9 @@ const ProspectoView = () => {
                             setProspecto({ ...prospecto, contacto: e.target.value })
                           }
                         />
-                        <FormControl fullWidth margin="normal" size="small">
+
+                        {/* Estado (activo/inactivo) */}
+                        {/* <FormControl fullWidth margin="normal" size="small">
                           <InputLabel>Estado</InputLabel>
                           <Select
                             value={prospecto.activo || 'activo'}
@@ -413,21 +426,52 @@ const ProspectoView = () => {
                             <MenuItem value="activo">Activo</MenuItem>
                             <MenuItem value="inactivo">Inactivo</MenuItem>
                           </Select>
-                        </FormControl>
-                        <FormControl fullWidth margin="normal" size="small">
-                          <InputLabel>Tipo de Cliente</InputLabel>
-                          <Select
-                            value={prospecto.activo || 'activo'}
-                            label="Estado"
-                            onChange={(e) =>
-                              setProspecto({ ...prospecto, activo: e.target.value })
-                            }
-                          >
-                            <MenuItem value="activo">Activo</MenuItem>
-                            <MenuItem value="inactivo">Inactivo</MenuItem>
-                          </Select>
-                        </FormControl>
+                        </FormControl> */}
+                        <TextField
+                          label="Tipo de Cliente"
+                          name="tipoCliente"
+                          value={prospecto.tipoCliente || ''}
+                          onChange={(e) =>
+                            setProspecto({ ...prospecto, tipoCliente: e.target.value })
+                          }
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          variant="outlined"
+                        />
+
+                        <FormControlLabel
+                          label="¿Ya es cliente?"
+                          sx={{ marginTop: 1 }}
+                          control={
+                            <Checkbox
+                              checked={!!prospecto.yaEsCliente}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                setProspecto({
+                                  ...prospecto,
+                                  yaEsCliente: e.target.checked,
+                                  numcomitente: e.target.checked ? prospecto.numcomitente : ''
+                                })
+                              }
+                            />
+                          }
+                        />
+
+                        {/* <TextField
+                          label="Número de Comitente"
+                          value={prospecto.numcomitente}
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          variant="outlined"
+                          disabled={!prospecto.yaEsCliente}
+                          required={prospecto.yaEsCliente}
+                          onChange={(e) =>
+                            setProspecto({ ...prospecto, numcomitente: e.target.value })
+                          }
+                        /> */}
                       </div>
+
                       <div className={styles.formColumn}>
                         <AsyncSelect
                           label="Referente"
@@ -459,6 +503,7 @@ const ProspectoView = () => {
                         />
                       </div>
                     </div>
+
                     <Divider sx={{ my: 2 }} />
                     <div className={styles.formActions}>
                       <Button variant="outlined" onClick={handleGoBack} size="small">
@@ -503,7 +548,7 @@ const ProspectoView = () => {
                                   color="error"
                                   onClick={() => event.id !== undefined && deleteEvent(event.id)}
                                 >
-                                  <DeleteIcon fontSize="small" />
+                                  {/* <DeleteIcon fontSize="small" /> */}
                                 </IconButton>
                               </Box>
                             </Box>
@@ -545,14 +590,18 @@ const ProspectoView = () => {
                           sx={{ width: 'calc(33% - 4px)' }}
                         />
 
-                        <AsyncSelect
-                          label="Asignado"
-                          value={newEvent.user_id}
-                          onChange={(newValue) =>
-                            setNewEvent(prev => ({ ...prev, user_id: newValue }))
-                          }
-                          fetchOptions={getUsers}
-                        />
+                        <Box className={styles.asyncSelectContainer}>
+                          <AsyncSelect
+                            label="Asignado"
+                            value={newEvent.user_id}
+                            placeholder="Seleccione un asignado"
+                            onChange={(newValue) =>
+                              setNewEvent((prev) => ({ ...prev, user_id: newValue }))
+                            }
+                            fetchOptions={getUsers}
+                            className={styles.asyncSelect}
+                          />
+                        </Box>
                       </Box>
 
                       <TextField
@@ -615,7 +664,7 @@ const ProspectoView = () => {
                                   color="error"
                                   onClick={() => action.id !== undefined && deleteAction(action.id)}
                                 >
-                                  <DeleteIcon fontSize="small" />
+                                  {/* <DeleteIcon fontSize="small" /> */}
                                 </IconButton>
                               </Box>
                             </Box>
@@ -657,14 +706,18 @@ const ProspectoView = () => {
                           sx={{ width: 'calc(33% - 4px)' }}
                         />
 
-                        <AsyncSelect
-                          label="Asignado"
-                          value={newAction.user_id}
-                          onChange={(newValue) =>
-                            setNewAction(prev => ({ ...prev, user_id: newValue }))
-                          }
-                          fetchOptions={getUsers}
-                        />
+                        <Box sx={{ width: 'calc(33% - 4px)' }}>
+                          <AsyncSelect
+                            label="Asignado"
+                            placeholder="Seleccione un asignado"
+                            value={newAction.user_id || ''}
+                            onChange={(newValue) =>
+                              setNewAction(prev => ({ ...prev, user_id: newValue }))
+                            }
+                            fetchOptions={getUsers}
+                            className={styles.inputField}
+                          />
+                        </Box>
                       </Box>
 
                       <TextField
@@ -724,14 +777,19 @@ const ProspectoView = () => {
             margin="dense"
             InputLabelProps={{ shrink: true }}
           />
-          <AsyncSelect
-            label="Asignado"
-            value={eventToEdit?.user_id || '1'}
-            onChange={(newValue) =>
-              setEventToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
-            }
-            fetchOptions={getUsers}
-          />
+
+          <Box sx={{ width: '100%', mt: 2, mb: 1 }}>
+            <AsyncSelect
+              label="Asignado"
+              value={eventToEdit?.user_id || ''}
+              placeholder="Seleccione un asignado"
+              onChange={(newValue) =>
+                setEventToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
+              }
+              fetchOptions={getUsers}
+              className={`${styles.inputField} async-select-container`}
+            />
+          </Box>
           <TextField
             label="Descripción"
             name="description"
@@ -743,6 +801,8 @@ const ProspectoView = () => {
             rows={3}
           />
         </DialogContent>
+
+
         <DialogActions>
           <Button onClick={handleCloseEditEvent}>Cancelar</Button>
           <Button onClick={handleSaveEditedEvent} variant="contained" color="primary">
@@ -777,7 +837,7 @@ const ProspectoView = () => {
           />
           <AsyncSelect
             label="Asignado"
-            value={actionToEdit?.user_id || '1'}
+            value={actionToEdit?.user_id || ''}
             onChange={(newValue) =>
               setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
             }

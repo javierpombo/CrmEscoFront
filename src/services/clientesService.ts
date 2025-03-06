@@ -73,7 +73,7 @@ function mapBackendClientToFrontend(client: BackendClient): Client {
     event_date: e.event_date,
     description: e.description,
     next_contact: e.next_contact,
-    user_id: e.user_id || '1'
+    user_id: e.user_id || ''
   }));
   const mappedActions: ClientAction[] = (client.actions || []).map(a => ({
     id: a.id,
@@ -81,7 +81,7 @@ function mapBackendClientToFrontend(client: BackendClient): Client {
     action_date: a.action_date,
     description: a.description,
     next_contact: a.next_contact,
-    user_id: a.user_id || '1'
+    user_id: a.user_id || ''
   }));
   return {
     id: client.CodComitente,

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Button, 
-  TextField, 
-  MenuItem, 
-  FormControl, 
-  Select, 
-  InputLabel, 
-  FormControlLabel, 
-  Checkbox, 
+import {
+  Button,
+  TextField,
+  MenuItem,
+  FormControl,
+  Select,
+  InputLabel,
+  FormControlLabel,
+  Checkbox,
   Grid,
   InputAdornment,
-  SelectChangeEvent, 
+  SelectChangeEvent,
   CircularProgress,
   Typography,
   Paper,
@@ -23,6 +23,9 @@ import { es } from 'date-fns/locale';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { Prospecto } from '../../../types/Prospecto';
 import styles from './ProspectForm.module.css';
+import AsyncSelect from '../../../components/AsyncSelect/AsyncSelect';
+import { getUsers } from '../../../services/apiService';
+
 
 interface ProspectFormProps {
   onSubmit: (data: Omit<Prospecto, 'id'>) => void;
@@ -49,36 +52,36 @@ const emptyProspectData: Omit<Prospecto, 'id'> = {
   numComitente: '',
   yaEsCliente: false,
   tipoClienteAccion: '',
-  activo: 'activo',
+  activo: '',
   notas: ''
 };
 
-export const ProspectForm: React.FC<ProspectFormProps> = ({ 
-  onSubmit, 
-  onCancel 
+export const ProspectForm: React.FC<ProspectFormProps> = ({
+  onSubmit,
+  onCancel
 }) => {
   // Estados para manejar el formulario
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Estado principal del formulario - Siempre empezamos con un formulario vacío
   const [formData, setFormData] = useState<Omit<Prospecto, 'id'>>(emptyProspectData);
-  
+
   // Efecto para verificar que no haya ID en los datos
   useEffect(() => {
     // Verificación de seguridad para asegurarnos que no hay ID
     if ('id' in formData) {
       console.error('ADVERTENCIA: Se detectó un ID en formData cuando no debería haberlo');
       console.log('Contenido de formData:', formData);
-      
+
       // Limpiar el ID
       const cleanData = { ...formData };
       delete (cleanData as any).id;
       setFormData(cleanData);
     }
   }, []);
-  
+
   // Manejar cambios en los campos del formulario
   const handleChange = (field: keyof Prospecto, value: any) => {
     setFormData((prev) => ({
@@ -96,16 +99,16 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
   // Enviar formulario - Modificado para prevenir envíos duplicados
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     // Prevenir múltiples envíos
     if (isSubmitting || formSubmitted) {
       console.warn('Formulario ya fue enviado, ignorando este envío adicional');
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       // Asegurar que no hay ID
       const cleanData = { ...formData };
@@ -113,12 +116,12 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
         console.warn('⚠️ Se detectó un ID en los datos de creación, eliminándolo...');
         delete (cleanData as any).id;
       }
-      
+
       // Marcar que el formulario ya fue enviado
       setFormSubmitted(true);
-      
+
       console.log('Enviando datos del formulario:', cleanData);
-      
+
       // Solo llamar onSubmit si no hemos enviado previamente
       onSubmit(cleanData);
     } catch (err) {
@@ -138,13 +141,13 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
             <Typography color="error">{error}</Typography>
           </div>
         )}
-        
+
         {formSubmitted && !error && (
           <div className={styles.successMessage}>
             <Typography color="primary">Datos enviados correctamente</Typography>
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -153,7 +156,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               </Typography>
               <Divider />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 label="Nombre del Cliente"
@@ -170,7 +173,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
                 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 label="Contacto"
@@ -187,67 +190,45 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
                 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Oficial</InputLabel>
-                <Select
-                  name="oficial"
-                  value={formData.oficial || ''}
-                  label="Oficial"
-                  onChange={handleSelectChange}
-                  required
-                  disabled={isSubmitting || formSubmitted}
-                  className={styles.selectField}
-                >
-                  <MenuItem value=""><em>Seleccionar</em></MenuItem>
-                  <MenuItem value="Oficial 1">Oficial 1</MenuItem>
-                  <MenuItem value="Oficial 2">Oficial 2</MenuItem>
-                  <MenuItem value="Oficial 3">Oficial 3</MenuItem>
-                </Select>
-              </FormControl>
+              <AsyncSelect
+                label="Oficial"
+                value={formData.oficial || ''}
+                onChange={(newValue) => handleChange('oficial', newValue)}
+                required
+                fetchOptions={getUsers}
+                disabled={isSubmitting || formSubmitted}
+              />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Referente</InputLabel>
-                <Select
-                  name="referente"
-                  value={formData.referente || ''}
-                  label="Referente"
-                  onChange={handleSelectChange}
-                  required
-                  disabled={isSubmitting || formSubmitted}
-                  className={styles.selectField}
-                >
-                  <MenuItem value=""><em>Seleccionar</em></MenuItem>
-                  <MenuItem value="Referente 1">Referente 1</MenuItem>
-                  <MenuItem value="Referente 2">Referente 2</MenuItem>
-                  <MenuItem value="Referente 3">Referente 3</MenuItem>
-                </Select>
-              </FormControl>
+              <AsyncSelect
+                label="Referente"
+                value={formData.referente || ''}
+                onChange={(newValue) => handleChange('referente', newValue)}
+                required
+                fetchOptions={getUsers}
+                disabled={isSubmitting || formSubmitted}
+              />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Tipo de Cliente</InputLabel>
-                <Select
-                  name="tipoCliente"
-                  value={formData.tipoCliente || ''}
-                  label="Tipo de Cliente"
-                  onChange={handleSelectChange}
-                  required
-                  disabled={isSubmitting || formSubmitted}
-                  className={styles.selectField}
-                >
-                  <MenuItem value=""><em>Seleccionar</em></MenuItem>
-                  <MenuItem value="Particular">Particular</MenuItem>
-                  <MenuItem value="Empresa">Empresa</MenuItem>
-                  <MenuItem value="Institucional">Institucional</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                label="Tipo de Cliente"
+                name="tipoCliente"
+                value={formData.tipoCliente || ''}
+                onChange={(e) => handleChange('tipoCliente', e.target.value)}
+                required
+                disabled={isSubmitting || formSubmitted}
+                fullWidth
+                variant="outlined"
+                size="small"
+                className={styles.inputField}
+              />
             </Grid>
-            
+
+
             <Grid item xs={12} md={6}>
               <DatePicker
                 label="Último Contacto"
@@ -272,21 +253,21 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               />
             </Grid>
           </Grid>
-          
+
           <div className={styles.formActions}>
-            <Button 
-              variant="outlined" 
-              color="inherit" 
+            <Button
+              variant="outlined"
+              color="inherit"
               onClick={onCancel}
               disabled={isSubmitting}
               className={styles.cancelButton}
             >
               Cancelar
             </Button>
-            
-            <Button 
-              type="submit" 
-              variant="contained" 
+
+            <Button
+              type="submit"
+              variant="contained"
               color="primary"
               disabled={isSubmitting || formSubmitted}
               className={styles.submitButton}

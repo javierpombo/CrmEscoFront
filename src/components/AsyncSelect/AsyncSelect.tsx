@@ -14,6 +14,9 @@ export interface AsyncSelectProps<T extends OptionType> {
   fetchOptions: () => Promise<T[]>;
   getOptionLabel?: (option: T) => string;
   placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+  required?: boolean;
 }
 
 const AsyncSelect = <T extends OptionType>({
@@ -22,6 +25,8 @@ const AsyncSelect = <T extends OptionType>({
   onChange,
   fetchOptions,
   getOptionLabel = (option: T) => option.label,
+  className,
+  required = false,
 }: AsyncSelectProps<T>) => {
   const [options, setOptions] = useState<T[]>([]);
   const [selectedOption, setSelectedOption] = useState<T | null>(null);
@@ -47,6 +52,7 @@ const AsyncSelect = <T extends OptionType>({
 
   return (
     <Autocomplete
+      className={className}
       options={options}
       getOptionLabel={getOptionLabel}
       value={selectedOption}
@@ -54,7 +60,7 @@ const AsyncSelect = <T extends OptionType>({
         onChange(newValue ? newValue.id.toString() : '');
       }}
       renderInput={(params) => (
-        <TextField {...params} label={label} variant="outlined" margin="normal" size="small" />
+        <TextField {...params} label={label} variant="outlined" margin="none" size="small" required={required}/>
       )}
     />
   );

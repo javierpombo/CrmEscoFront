@@ -99,7 +99,7 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     event_date: e.event_date,
     description: e.description,
     next_contact: e.next_contact,
-    user_id: (e as any).user_id || '1'  
+    user_id: (e as any).user_id || ''  
   }));
   
   // Convertir acciones del backend al tipo del frontend
@@ -109,7 +109,7 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     action_date: a.action_date,
     description: a.description,
     next_contact: a.next_contact,
-    user_id: (a as any).user_id || '1'  
+    user_id: (a as any).user_id || ''  
   }));
 
   return {
@@ -307,7 +307,7 @@ export const prospectoService = {
     try {
       // Usar la función específica para actualización
       const backendData = mapFrontendProspectToBackendForUpdate(data, id);
-      
+      console.log(data);
       // Verificar que el ID esté presente
       if (!backendData.id) {
         console.error('Error: No se proporcionó ID para actualizar prospecto');

@@ -399,7 +399,7 @@ const ClientView: React.FC = () => {
                                                                     <EditIcon fontSize="small" />
                                                                 </IconButton>
                                                                 <IconButton size="small" color="error" onClick={() => deleteEvent(event.id)}>
-                                                                    <DeleteIcon fontSize="small" />
+                                                                    {/* <DeleteIcon fontSize="small" /> */}
                                                                 </IconButton>
                                                             </Box>
                                                         </Box>
@@ -509,7 +509,7 @@ const ClientView: React.FC = () => {
                                                                     <EditIcon fontSize="small" />
                                                                 </IconButton>
                                                                 <IconButton size="small" color="error" onClick={() => deleteAction(action.id)}>
-                                                                    <DeleteIcon fontSize="small" />
+                                                                    {/* <DeleteIcon fontSize="small" /> */}
                                                                 </IconButton>
                                                             </Box>
                                                         </Box>

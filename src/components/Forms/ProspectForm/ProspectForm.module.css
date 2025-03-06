@@ -1,9 +1,12 @@
+/* Contenedor principal del formulario */
 .formContainer {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 24px; /* Agrega padding para que no esté tan pegado a los bordes */
 }
 
+/* Mensaje de error */
 .errorMessage {
   background-color: #ffebee;
   color: #d32f2f;
@@ -14,6 +17,7 @@
   border-left: 4px solid #d32f2f;
 }
 
+/* Contenedor para el loading */
 .loadingContainer {
   display: flex;
   flex-direction: column;
@@ -23,6 +27,7 @@
   gap: 16px;
 }
 
+/* Acciones del formulario (botones) */
 .formActions {
   display: flex;
   justify-content: flex-end;
@@ -30,12 +35,14 @@
   margin-top: 24px;
 }
 
+/* Cabecera de tarjetas o secciones */
 .cardHeader {
   background-color: #f5f5f5;
   padding: 16px;
   border-bottom: 1px solid #e0e0e0;
 }
 
+/* Contenedor de pestañas */
 .tabsContainer {
   display: flex;
   border-bottom: 1px solid #e0e0e0;
@@ -72,6 +79,7 @@
   display: block;
 }
 
+/* Título de secciones (por ejemplo, "Información Principal") */
 .sectionTitle {
   display: flex;
   justify-content: space-between;
@@ -83,11 +91,13 @@
 
 .sectionTitle h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 18px; /* Tamaño mayor para que no se vea "aplastado" */
+  font-weight: 600;
 }
 
-.eventContainer, .actionContainer {
+/* Contenedores para eventos y acciones */
+.eventContainer,
+.actionContainer {
   margin-bottom: 16px;
   padding: 16px;
   border: 1px solid #e0e0e0;
@@ -95,6 +105,7 @@
   background-color: #fafafa;
 }
 
+/* Estado vacío */
 .emptyState {
   text-align: center;
   padding: 24px;
@@ -105,10 +116,12 @@
   margin-bottom: 16px;
 }
 
+/* Ajustes para Checkboxes */
 .checkbox {
   margin-left: 0 !important;
 }
 
+/* Botones de agregar o quitar */
 .addButton {
   margin-left: auto;
 }
@@ -117,15 +130,17 @@
   margin-top: 24px;
 }
 
+/* Área de texto (textarea) */
 .textarea {
   min-height: 100px;
 }
 
+/* Separador */
 .divider {
   margin: 24px 0;
 }
 
-/* Responsive adjustments */
+/* Responsive: ajustes para pantallas más pequeñas */
 @media (max-width: 768px) {
   .tabButton {
     padding: 10px 16px;
@@ -144,12 +159,13 @@
     width: 100%;
   }
   
-  .addButton, .removeButton {
+  .addButton,
+  .removeButton {
     width: 100%;
   }
 }
 
-/* Input component styles */
+/* Estilos para inputs */
 .inputContainer {
   margin-bottom: 16px;
 }
@@ -196,17 +212,12 @@
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
 }
 
-.errorMessage {
-  color: #d32f2f;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
+/* Utilidad para ancho completo */
 .fullWidth {
   width: 100%;
 }
 
-/* Select component styles */
+/* Estilos para select */
 .selectContainer {
   margin-bottom: 16px;
 }
@@ -261,7 +272,7 @@
   pointer-events: none;
 }
 
-/* Date picker custom styles */
+/* Estilos personalizados para el date picker */
 .datePicker {
   width: 100%;
 }
