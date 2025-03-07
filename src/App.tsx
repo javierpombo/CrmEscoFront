@@ -29,6 +29,11 @@ function App() {
     let favicon = "/default-favicon.png"; // Ruta por defecto del favicon
 
     switch (pathname) {
+      case "/":
+        title = "clientes";
+        metaDescription = "Descripción del clientes";
+        favicon = "/menu-act.svg";
+        break;
       case "/crm/clients":
         title = "clientes";
         metaDescription = "Descripción del clientes";
@@ -77,6 +82,7 @@ function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<Dashboard />} />
       <Route path="/crm/clients" element={<Dashboard />} />
       <Route path="/crm/prospectos" element={<ProspectList />} />
       <Route path="/crm/prospectos/detalle/:id" element={<ProspectoView />} />

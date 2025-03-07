@@ -1,58 +1,44 @@
-# Stage 1: Build - Usa Node Alpine como base
+# Stage 1: Build React app
 FROM node:20-alpine AS build
 
-# Crear usuario no privilegiado
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# Establecer directorio de trabajo
 WORKDIR /app
-
-# Copiar archivos de dependencias primero (para aprovechar caché de capas)
 COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit && npm cache clean --force
+COPY . ./
+RUN npm run build
 
-# Instalar dependencias con configuraciones de seguridad
-RUN npm ci --ignore-scripts --no-audit \
-    && npm cache clean --force
+# Cambiar permisos a usuario no privilegiado (opcional)
+RUN chown -R appuser:appgroup /app/build
 
-# Copiar código fuente (solo lo necesario para build)
-COPY tsconfig.json ./
-COPY public ./public
-COPY src ./src
-
-# Construir la aplicación
-RUN npm run build \
-    && chown -R appuser:appgroup /app/build
-
-# Stage 2: Producción - Usar Nginx Alpine
+# Stage 2: Nginx para producción
 FROM nginx:alpine AS production
 
+# Copiar configuración de nginx
+COPY settings.conf /etc/nginx/conf.d/default.conf
+
+# Copiar certificados SSL y clave privada
+COPY ./crm.acqit.crt /etc/ssl/certs/crm.acqit.crt
+COPY ./crm.acqit.key /etc/ssl/private/crm.acqit.key
+
+# Asegurar que el certificado y clave tengan permisos adecuados
+RUN chmod 644 /etc/ssl/certs/crm.acqit.crt \
+    && chmod 600 /etc/ssl/private/crm.acqit.key \
+    && chown nginx:nginx /etc/ssl/certs/crm.acqit.crt \
+    && chown nginx:nginx /etc/ssl/private/crm.acqit.key
+
 # Copiar configuración personalizada de nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN rm /etc/nginx/conf.d/default.conf
+COPY settings.conf /etc/nginx/conf.d/default.conf
 
-# Configuraciones de seguridad para nginx
-RUN touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    # Eliminar archivos innecesarios
-    rm -rf /usr/share/nginx/html/* && \
-    # Permisos para directorios temporales
-    chown -R nginx:nginx /etc/nginx/conf.d
+# Limpiar carpeta default y copiar contenido build
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Copiar archivos de build desde la etapa anterior
-COPY --from=build --chown=nginx:nginx /app/build /usr/share/nginx/html
+# Configurar permisos para archivos html
+RUN chown -R nginx:nginx /usr/share/nginx/html \
+    && chown -R nginx:nginx /var/cache/nginx
 
-COPY  ./crm.acqit.crt   /etc/ssl/certs/
+EXPOSE 80 443
 
-COPY ./crm.acqit.key  /etc/ssl/private/
-
-# Cambiar al usuario no privilegiado
-USER nginx
-
-# Exponer puerto para HTTPS
-EXPOSE 443 80
-
-# Comprobar que nginx está configurado correctamente
-HEALTHCHECK --interval=30s --timeout=3s CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
-
-# Iniciar nginx con opciones para que se ejecute en primer plano
 CMD ["nginx", "-g", "daemon off;"]

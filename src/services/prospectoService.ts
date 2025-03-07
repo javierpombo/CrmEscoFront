@@ -2,9 +2,7 @@
 
 import axios from 'axios';
 import { Prospecto, EventoType, AccionType } from '../types/Prospecto';
-
-// URL base de la API - Verifica que esta URL sea correcta
-const API_BASE_URL = 'https://apicrm.acqit.com.ar:8000/api';
+import { API_BASE_URL } from '../config/constants'; /* Es la URL de la api */
 
 // Variable para controlar si hay una solicitud de creación en curso
 let isCreatingProspect = false;

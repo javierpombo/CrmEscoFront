@@ -2,8 +2,7 @@
 
 import axios from 'axios';
 import { Client, ClientEvent, ClientAction } from '../types/Client';
-
-const API_BASE_URL = 'https://apicrm.acqit.com.ar:8000/api';
+import { API_BASE_URL } from '../config/constants'; /* Es la URL de la api */
 
 // Configuración de interceptores para depuración
 axios.interceptors.request.use(request => {
