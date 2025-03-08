@@ -14,6 +14,9 @@ RUN chown -R appuser:appgroup /app/build
 # Stage 2: Nginx para producción
 FROM nginx:alpine AS production
 
+# Instalar envsubst (gettext) para reemplazar variables en config.template.js
+RUN apk add --no-cache gettext
+
 # Copiar configuración de nginx
 COPY settings.conf /etc/nginx/conf.d/default.conf
 
@@ -35,10 +38,21 @@ COPY settings.conf /etc/nginx/conf.d/default.conf
 RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /app/build /usr/share/nginx/html
 
+# ───────────────────────────────────────────────────────────────
+# AGREGADOS PARA INYECTAR VARIABLES DE ENTORNO EN LA APP (React)
+# Copiar el archivo de plantilla para la configuración de la app React
+COPY docker/config.template.js /usr/share/nginx/html/config.template.js
+
+# Copiar el script de entrypoint que realizará la inyección de variables y lanzará Nginx
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+# ───────────────────────────────────────────────────────────────
+
 # Configurar permisos para archivos html
 RUN chown -R nginx:nginx /usr/share/nginx/html \
     && chown -R nginx:nginx /var/cache/nginx
 
 EXPOSE 80 443
 
-CMD ["nginx", "-g", "daemon off;"]
+# Usar el entrypoint para inyectar variables y arrancar Nginx
+CMD ["/entrypoint.sh"]
