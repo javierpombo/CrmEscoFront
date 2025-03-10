@@ -21,14 +21,14 @@ RUN apk add --no-cache gettext
 COPY settings.conf /etc/nginx/conf.d/default.conf
 
 # Copiar certificados SSL y clave privada
-COPY ./crm.acqit.crt /etc/ssl/certs/crm.acqit.crt
-COPY ./crm.acqit.key /etc/ssl/private/crm.acqit.key
+COPY ./crm.davalores.crt /etc/ssl/certs/crm.davalores.crt
+COPY ./crm.davalores.key /etc/ssl/private/crm.davalores.key
 
 # Asegurar que el certificado y clave tengan permisos adecuados
-RUN chmod 644 /etc/ssl/certs/crm.acqit.crt \
-    && chmod 600 /etc/ssl/private/crm.acqit.key \
-    && chown nginx:nginx /etc/ssl/certs/crm.acqit.crt \
-    && chown nginx:nginx /etc/ssl/private/crm.acqit.key
+RUN chmod 644 /etc/ssl/certs/crm.davalores.crt \
+    && chmod 600 /etc/ssl/private/crm.davalores.key \
+    && chown nginx:nginx /etc/ssl/certs/crm.davalores.crt \
+    && chown nginx:nginx /etc/ssl/private/crm.davalores.key
 
 # Copiar configuración personalizada de nginx
 RUN rm /etc/nginx/conf.d/default.conf
