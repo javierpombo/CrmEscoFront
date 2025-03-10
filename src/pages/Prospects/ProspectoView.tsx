@@ -403,7 +403,7 @@ const ProspectoView = () => {
                         />
 
                         <TextField
-                          label="Email / Contacto"
+                          label="Contacto en el cliente"
                           value={prospecto.contacto || ''}
                           fullWidth
                           margin="normal"

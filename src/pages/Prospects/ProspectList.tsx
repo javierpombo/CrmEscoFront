@@ -76,7 +76,7 @@ const ProspectList: React.FC = () => {
   // Definición de columnas para la tabla
   const prospectColumns = [
     { label: 'Nombre', field: 'nombreCliente' },
-    { label: 'Contacto', field: 'contacto' },
+    { label: 'Contacto en el cliente', field: 'contacto' },
     { label: 'Tipo Cliente', field: 'tipoCliente' },
     {
       label: 'Oficial',
