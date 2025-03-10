@@ -322,13 +322,21 @@ const ClientView: React.FC = () => {
                 <Box display="flex" flexDirection="column" gap={1} p={1}>
                     {Object.entries(client).map(([key, value]) => {
                         if (excludedKeys.includes(key)) return null;
+                        let displayKey = key;
+                        let displayValue;
+                        if (typeof value === 'boolean') {
+                            displayKey = 'estado';
+                            displayValue = value ? 'activo' : 'inactivo';
+                        } else {
+                            displayValue = value !== null && value !== undefined ? value.toString() : '—';
+                        }
                         return (
                             <Box key={key} display="flex" alignItems="center">
                                 <Typography variant="caption" color="textSecondary" sx={{ minWidth: '150px' }}>
-                                    {key}:
+                                    {displayKey}:
                                 </Typography>
                                 <Typography variant="body2">
-                                    {value !== null && value !== undefined ? value.toString() : '—'}
+                                    {displayValue}
                                 </Typography>
                             </Box>
                         );
@@ -337,6 +345,8 @@ const ClientView: React.FC = () => {
             </Paper>
         );
     };
+    
+    
 
     return (
         <div style={fixedHeightStyles.pageContainer}>
