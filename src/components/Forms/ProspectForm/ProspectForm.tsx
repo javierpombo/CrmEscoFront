@@ -176,8 +176,8 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
 
             <Grid item xs={12} md={6}>
               <TextField
-                label="Contacto"
-                placeholder="Información de contacto"
+                label="Contacto en el cliente"
+                placeholder="Contacto en el cliente"
                 fullWidth
                 value={formData.contacto || ''}
                 onChange={(e) => handleChange('contacto', e.target.value)}
