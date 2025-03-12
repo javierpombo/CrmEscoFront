@@ -77,7 +77,7 @@ const ProspectList: React.FC = () => {
   const prospectColumns = [
     { label: 'Nombre', field: 'nombreCliente' },
     { label: 'Contacto en el cliente', field: 'contacto' },
-    { label: 'Tipo Cliente', field: 'tipoCliente' },
+    { label: 'Cargo del contacto', field: 'cargo_contacto' },
     {
       label: 'Oficial',
       field: 'officialUser',

@@ -32,3 +32,9 @@ export interface ClientEvent {
     [key: string]: any;
   }
   
+  export interface Strategy {
+    id: string | number;
+    client_number: number;
+    strategy: string;
+    description: string | null;
+  }

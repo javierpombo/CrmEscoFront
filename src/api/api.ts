@@ -32,6 +32,10 @@ interface BackendProspect {
   name: string;
   company_contact: string;
   contact_position: string;
+  phone_contact?: string;
+  email_contact?: string;
+  additional_info?: string;
+  sector_industry?: string;
   referent: string;
   official: string;
   last_contact: string | null;
@@ -87,7 +91,11 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     contacto: prospect.company_contact,
     oficial: prospect.official,
     referente: prospect.referent,
-    tipoCliente: prospect.contact_position,
+    cargo_contacto: prospect.contact_position,
+    telefono_contacto: prospect.phone_contact || '',
+    email_contacto: prospect.email_contact || '',
+    info_adicional: prospect.additional_info || '',
+    sector_industria: prospect.sector_industry || '', 
     ultimoContacto: prospect.last_contact,
     tipoAccion: lastAction?.description || '',
     fechaVencimiento: lastAction?.next_contact || null,
@@ -118,7 +126,11 @@ function mapFrontendProspectToBackend(
     company_contact: prospecto.contacto || '',
     official: prospecto.oficial || '',
     referent: prospecto.referente || '',
-    contact_position: prospecto.tipoCliente || '',
+    contact_position: prospecto.cargo_contacto || '',
+    phone_contact: prospecto.telefono_contacto || '',
+    email_contact: prospecto.email_contacto || '',
+    additional_info: prospecto.info_adicional || '',
+    sector_industry: prospecto.sector_industria || '',  
     last_contact: prospecto.ultimoContacto
       ? new Date(prospecto.ultimoContacto).toISOString().split('T')[0]
       : null
@@ -327,7 +339,7 @@ export async function getClients(
   // Realizamos el mapeo de cada item para que tenga los campos que usa el front.
   const transformedData = response.data.data.map((item: any, index: number) => ({
     id: item.Numero || String(index + 1),
-    numcomitente: item.CodComitente || '-',
+    numcomitente: item.Numero || '-',
     nombre: item.Descripcion || '-',
     sector: item.Actividad || '-',
     // Si el campo Oficial tiene comas, nos quedamos con el primer valor:

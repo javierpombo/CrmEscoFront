@@ -18,7 +18,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Grid
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -82,7 +83,7 @@ const fixedHeightStyles: Record<string, React.CSSProperties> = {
   addForm: {
     padding: '10px',
     backgroundColor: '#f9f9f9',
-    marginTop: '10px',
+    marginTop: '5px',
     borderRadius: '4px'
   }
 };
@@ -97,9 +98,6 @@ const ProspectoView = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
 
-
-
-  // Estados para nuevos eventos y acciones (incluyen user_id)
   const [newEvent, setNewEvent] = useState<{
     event_date: string;
     description: string;
@@ -134,20 +132,19 @@ const ProspectoView = () => {
       try {
         const data = await prospectoService.getProspectoById(id);
         if (data) {
-          const users = await getUsers(); // Obtener lista de usuarios
+          const users = await getUsers();
 
           setUsers(users.map(user => ({
             id: String(user.id),
             label: user.label
-          }))); // Guardamos la lista de usuarios formateada para fácil acceso
+          })));
 
           setProspecto({
             ...data,
-            referente: data.referente, // Solo guardamos el ID
-            oficial: data.oficial,     // Solo guardamos el ID
+            referente: data.referente,
+            oficial: data.oficial,
           });
 
-          // setUsers(users); // Guardamos la lista de usuarios para los select
         } else {
           setError('No se encontró el prospecto');
         }
@@ -367,10 +364,10 @@ const ProspectoView = () => {
                 <Typography variant="caption" color="textSecondary">Último contacto</Typography>
                 <Typography variant="body2">{prospecto?.ultimoContacto || "—"}</Typography>
               </Box>
-              <Box className={styles.infoItem}>
+              {/* <Box className={styles.infoItem}>
                 <Typography variant="caption" color="textSecondary">Tipo Cliente</Typography>
-                <Typography variant="body2">{prospecto?.tipoCliente || "—"}</Typography>
-              </Box>
+                <Typography variant="body2">{prospecto?.cargo_contacto || "—"}</Typography>
+              </Box> */}
               {/* <Box className={styles.infoItem}>
                 <Typography variant="caption" color="textSecondary">Estado</Typography>
                 <Typography variant="body2">{prospecto?.activo || "—"}</Typography>
@@ -388,7 +385,6 @@ const ProspectoView = () => {
               <div style={fixedHeightStyles.tabContent}>
                 {activeTab === 0 && (
                   <div style={fixedHeightStyles.tabsPanel}>
-                    {/* ... dentro de {activeTab === 0 && (...) } ... */}
                     <div className={styles.formContent}>
                       <div className={styles.formColumn}>
                         <TextField
@@ -401,48 +397,22 @@ const ProspectoView = () => {
                             setProspecto({ ...prospecto, nombreCliente: e.target.value })
                           }
                         />
-
-                        <TextField
-                          label="Contacto en el cliente"
-                          value={prospecto.contacto || ''}
-                          fullWidth
-                          margin="normal"
-                          size="small"
-                          onChange={(e) =>
-                            setProspecto({ ...prospecto, contacto: e.target.value })
-                          }
-                        />
-
-                        {/* Estado (activo/inactivo) */}
-                        {/* <FormControl fullWidth margin="normal" size="small">
-                          <InputLabel>Estado</InputLabel>
-                          <Select
-                            value={prospecto.activo || 'activo'}
-                            label="Estado"
+                          <TextField
+                            label="Sector/Industria"
+                            name="Sector/Industria"
+                            value={prospecto.sector_industria || ''}
                             onChange={(e) =>
-                              setProspecto({ ...prospecto, activo: e.target.value })
+                              setProspecto({ ...prospecto, sector_industria: e.target.value })
                             }
-                          >
-                            <MenuItem value="activo">Activo</MenuItem>
-                            <MenuItem value="inactivo">Inactivo</MenuItem>
-                          </Select>
-                        </FormControl> */}
-                        <TextField
-                          label="Tipo de Cliente"
-                          name="tipoCliente"
-                          value={prospecto.tipoCliente || ''}
-                          onChange={(e) =>
-                            setProspecto({ ...prospecto, tipoCliente: e.target.value })
-                          }
-                          fullWidth
-                          margin="normal"
-                          size="small"
-                          variant="outlined"
-                        />
+                            fullWidth
+                            margin="normal"
+                            size="small"
+                            variant="outlined"
+                          />
 
                         <FormControlLabel
                           label="¿Ya es cliente?"
-                          sx={{ marginTop: 1 }}
+                          sx={{ marginTop: 0 }}
                           control={
                             <Checkbox
                               checked={!!prospecto.yaEsCliente}
@@ -456,20 +426,6 @@ const ProspectoView = () => {
                             />
                           }
                         />
-
-                        {/* <TextField
-                          label="Número de Comitente"
-                          value={prospecto.numcomitente}
-                          fullWidth
-                          margin="normal"
-                          size="small"
-                          variant="outlined"
-                          disabled={!prospecto.yaEsCliente}
-                          required={prospecto.yaEsCliente}
-                          onChange={(e) =>
-                            setProspecto({ ...prospecto, numcomitente: e.target.value })
-                          }
-                        /> */}
                       </div>
 
                       <div className={styles.formColumn}>
@@ -477,18 +433,20 @@ const ProspectoView = () => {
                           label="Referente"
                           value={prospecto?.referente || ''}
                           onChange={(newValue) =>
-                            setProspecto(prev => (prev ? { ...prev, referente: newValue } : prev))
+                            setProspecto((prev) => (prev ? { ...prev, referente: newValue } : prev))
                           }
                           fetchOptions={getUsers}
                         />
+
                         <AsyncSelect
                           label="Oficial"
                           value={prospecto?.oficial || ''}
                           onChange={(newValue) =>
-                            setProspecto(prev => (prev ? { ...prev, oficial: newValue } : prev))
+                            setProspecto((prev) => (prev ? { ...prev, oficial: newValue } : prev))
                           }
                           fetchOptions={getUsers}
                         />
+
                         <TextField
                           label="Último contacto"
                           type="date"
@@ -504,6 +462,85 @@ const ProspectoView = () => {
                       </div>
                     </div>
 
+                    {/* Sección para información de contacto */}
+                    <div className={styles.additionalContactInfo}>
+                      <Divider sx={{ my: 0.5 }} />
+                      <Typography variant="h6" gutterBottom>
+                      Información de contacto del cliente
+                      </Typography>
+
+                      <Grid container spacing={2}>
+                        {/* Primera fila */}
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            label="Contacto en el cliente"
+                            value={prospecto.contacto || ''}
+                            fullWidth
+                            margin="normal"
+                            size="small"
+                            onChange={(e) =>
+                              setProspecto({ ...prospecto, contacto: e.target.value })
+                            }
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            label="Cargo del Contacto"
+                            name="Cargo del Contacto"
+                            value={prospecto.cargo_contacto || ''}
+                            onChange={(e) =>
+                              setProspecto({ ...prospecto, cargo_contacto: e.target.value })
+                            }
+                            fullWidth
+                            margin="normal"
+                            size="small"
+                            variant="outlined"
+                          />
+                        </Grid>
+
+                        {/* Segunda fila */}
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            label="Teléfono/Celular"
+                            value={prospecto.telefono_contacto || ''}
+                            onChange={(e) =>
+                              setProspecto({ ...prospecto, telefono_contacto: e.target.value })
+                            }
+                            fullWidth
+                            margin="normal"
+                            size="small"
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            label="Email"
+                            type="email"
+                            value={prospecto.email_contacto || ''}
+                            onChange={(e) =>
+                              setProspecto({ ...prospecto, email_contacto: e.target.value })
+                            }
+                            fullWidth
+                            margin="normal"
+                            size="small"
+                          />
+                        </Grid>
+                      </Grid>
+
+                      {/* Información adicional en toda la anchura */}
+                      <TextField
+                        label="Información Relevante"
+                        value={prospecto.info_adicional || ''}
+                        onChange={(e) =>
+                          setProspecto({ ...prospecto, info_adicional: e.target.value })
+                        }
+                        fullWidth
+                        margin="normal"
+                        size="small"
+                        multiline
+                        rows={3}
+                      />
+                    </div>
+
                     <Divider sx={{ my: 2 }} />
                     <div className={styles.formActions}>
                       <Button variant="outlined" onClick={handleGoBack} size="small">
@@ -515,6 +552,7 @@ const ProspectoView = () => {
                     </div>
                   </div>
                 )}
+
                 {activeTab === 1 && (
                   <div style={fixedHeightStyles.tabsPanel}>
                     <Typography variant="subtitle1" gutterBottom>

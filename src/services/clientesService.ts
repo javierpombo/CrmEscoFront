@@ -1,7 +1,7 @@
 // src/services/clientesService.ts
 
 import axios from 'axios';
-import { Client, ClientEvent, ClientAction } from '../types/Client';
+import { Client, ClientEvent, ClientAction, Strategy } from '../types/Client';
 import { API_BASE_URL } from '../config/constants'; /* Es la URL de la api */
 
 // Configuración de interceptores para depuración
@@ -268,7 +268,7 @@ export const clientesService = {
       return [];
     }
   },
-  
+
   async getActionsByCodComitente(cod: string): Promise<ClientAction[]> {
     try {
       const url = `${API_BASE_URL}/clients/${cod}/actions`;
@@ -278,8 +278,37 @@ export const clientesService = {
       console.error('Error al obtener acciones:', error);
       return [];
     }
+  },
+
+  async getStrategyByClientNumber(clientNumber: string) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/clients/strategies/${clientNumber}`);
+      return response.data.data; // Obtener la propiedad data de la respuesta
+    } catch (error) {
+      console.error('Error al obtener estrategia del cliente:', error);
+      return null;
+    }
+  },
+
+  async createStrategy(strategyData: Partial<Strategy>) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/clients/strategies`, strategyData);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error al crear estrategia:', error);
+      return null;
+    }
+  },
+
+  async updateStrategy(id: string | number, strategyData: Partial<Strategy>) {
+    try {
+      // Cambia a POST con /update como sufijo
+      const response = await axios.post(`${API_BASE_URL}/clients/strategies/${id}/update`, strategyData);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error al actualizar estrategia:', error);
+      return null;
+    }
   }
-
 };
-
 export default clientesService;

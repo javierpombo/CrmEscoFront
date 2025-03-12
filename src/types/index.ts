@@ -15,7 +15,7 @@ export interface BaseEntity {
   }
   
   export interface Client extends BaseEntity {
-    tipoCliente: string;
+    cargo_contacto: string;
     contacto: string;
     oficial: string;
     referente: string;

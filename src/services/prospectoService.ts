@@ -34,6 +34,9 @@ interface BackendProspect {
   name: string;
   company_contact: string;
   contact_position: string;
+  phone_contact?: string;
+  email_contact?: string;
+  additional_info?: string; 
   referent: string;
   official: string;
   last_contact: string | null;
@@ -42,9 +45,10 @@ interface BackendProspect {
   client_type_action?: string;
   active?: string;
   notes?: string;
+  sector_industry: string;
   // Propiedades para crear acciones iniciales
-  action_description?: string; // Esta propiedad faltaba
-  action_date?: string | null; // Esta propiedad faltaba
+  action_description?: string;
+  action_date?: string | null;
   // Relaciones
   events?: BackendEvent[];
   actions?: BackendAction[];
@@ -116,7 +120,7 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     contacto: prospect.company_contact,
     oficial: prospect.official,
     referente: prospect.referent,
-    tipoCliente: prospect.contact_position,
+    cargo_contacto: prospect.contact_position,
     ultimoContacto: prospect.last_contact,
     tipoAccion: lastAction?.description || '',
     fechaVencimiento: lastAction?.next_contact || null,
@@ -126,7 +130,11 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     activo: prospect.active || 'activo',
     notas: prospect.notes || '',
     events: mappedEvents,
-    actions: mappedActions
+    actions: mappedActions,
+    telefono_contacto: prospect.phone_contact || '',
+    email_contacto: prospect.email_contact || '',
+    info_adicional: prospect.additional_info || '',
+    sector_industria: prospect.sector_industry || '',
   };
 }
 
@@ -141,12 +149,16 @@ function mapFrontendProspectToBackendForCreate(
     company_contact: prospecto.contacto || '',
     official: prospecto.oficial || '',
     referent: prospecto.referente || '',
-    contact_position: prospecto.tipoCliente || '',
+    contact_position: prospecto.cargo_contacto || '',
+    phone_contact: prospecto.telefono_contacto || '',
+    email_contact: prospecto.email_contacto || '',
+    additional_info: prospecto.info_adicional || '', 
+    sector_industry: prospecto.sector_industry || '', 
     last_contact: prospecto.ultimoContacto
       ? new Date(prospecto.ultimoContacto).toISOString().split('T')[0]
       : null,
     // Campos adicionales para el formulario
-    client_number: prospecto.numComitente || '',
+    client_number: prospecto.Numero || '',
     is_client: prospecto.yaEsCliente || false,
     client_type_action: prospecto.tipoClienteAccion || '',
     active: prospecto.activo || 'activo',
@@ -172,7 +184,11 @@ function mapFrontendProspectToBackendForUpdate(
     company_contact: prospecto.contacto || '',
     official: prospecto.oficial || '',
     referent: prospecto.referente || '',
-    contact_position: prospecto.tipoCliente || '',
+    contact_position: prospecto.cargo_contacto || '',
+    phone_contact: prospecto.telefono_contacto || '',
+    email_contact: prospecto.email_contacto || '',
+    additional_info: prospecto.info_adicional || '',
+    sector_industry: prospecto.sector_industria || '', 
     last_contact: prospecto.ultimoContacto
       ? new Date(prospecto.ultimoContacto).toISOString().split('T')[0]
       : null,

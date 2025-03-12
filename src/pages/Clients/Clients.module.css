@@ -282,3 +282,28 @@
   background-color: rgba(244, 67, 54, 0.1);
   color: #F44336;
 }
+
+/*******************************
+ * FOOTER Y PAGINACIÓN
+ *******************************/
+ .footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--neutral-neutral-200);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pagination {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: #fff;
+  box-sizing: border-box;
+  width: auto;
+}

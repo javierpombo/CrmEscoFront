@@ -27,7 +27,7 @@ export interface Prospecto {
   id?: string;
   nombreCliente: string;
   contacto: string;
-  tipoCliente: string;
+  cargo_contacto: string;
   oficial?: string;
   referente?: string;
   officialUser?: any;
@@ -40,6 +40,7 @@ export interface Prospecto {
   tipoClienteAccion: string;
   activo: string;
   notas: string;
+  sector_industria: string;
   events?: any[];
   actions?: any[];
   [key: string]: any;

@@ -54,7 +54,7 @@ const emptyProspectData: Omit<Prospecto, 'id'> = {
   contacto: '',
   oficial: '',
   referente: '',
-  tipoCliente: '',
+  cargo_contacto: '',
   ultimoContacto: null,
   tipoAccion: '',
   fechaVencimiento: null,
@@ -183,11 +183,11 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
 
           <Grid item xs={12} md={6}>
             <FormControl fullWidth size="small">
-              <InputLabel>Tipo de Cliente</InputLabel>
+              <InputLabel>Cargo del contacto</InputLabel>
               <Select
-                name="tipoCliente"
-                value={formData.tipoCliente || ''}
-                label="Tipo de Cliente"
+                name="Cargo del contacto"
+                value={formData.cargo_contacto || ''}
+                label="Cargo del contacto"
                 onChange={handleSelectChange}
                 required
               >

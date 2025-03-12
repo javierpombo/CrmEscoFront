@@ -32,7 +32,7 @@ import AsyncSelect from '../../components/AsyncSelect/AsyncSelect';
 
 // Servicio y tipos de clientes
 import { clientesService } from '../../services/clientesService';
-import { Client, ClientEvent, ClientAction } from '../../types/Client';
+import { Client, ClientEvent, ClientAction, Strategy } from '../../types/Client';
 
 import styles from './ClientView.module.css';
 
@@ -97,6 +97,12 @@ const ClientView: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
+    const [strategy, setStrategy] = useState<Strategy | null>(null);
+    const [isEditingStrategy, setIsEditingStrategy] = useState<boolean>(false);
+    const [strategyForm, setStrategyForm] = useState<{ strategy: string, description: string }>({
+        strategy: '',
+        description: ''
+    });
 
     // Estados para nuevos eventos y acciones; se inicializan con valor vacío para "user_id"
     const [newEvent, setNewEvent] = useState<ClientEvent>({
@@ -116,11 +122,13 @@ const ClientView: React.FC = () => {
         user_id: ''
     });
 
+
     // Estados para modales de edición
     const [editEventDialogOpen, setEditEventDialogOpen] = useState<boolean>(false);
     const [eventToEdit, setEventToEdit] = useState<ClientEvent | null>(null);
     const [editActionDialogOpen, setEditActionDialogOpen] = useState<boolean>(false);
     const [actionToEdit, setActionToEdit] = useState<ClientAction | null>(null);
+    const [clientNumComitente, setClientNumComitente] = useState<string>('');
 
     // Cargar el detalle del cliente, eventos y acciones
     useEffect(() => {
@@ -135,15 +143,27 @@ const ClientView: React.FC = () => {
             try {
                 const clientData = await clientesService.getClientByCodComitente(numcomitente);
                 if (clientData) {
-                    const [eventsData, actionsData] = await Promise.all([
+                    setClientNumComitente(numcomitente);
+                    const [eventsData, actionsData, strategyData] = await Promise.all([
                         clientesService.getEventsByCodComitente(numcomitente),
-                        clientesService.getActionsByCodComitente(numcomitente)
+                        clientesService.getActionsByCodComitente(numcomitente),
+                        clientesService.getStrategyByClientNumber(numcomitente)
                     ]);
                     setClient({
                         ...clientData,
                         events: eventsData,
                         actions: actionsData
                     });
+
+                    // Si hay estrategia, la guardamos en el estado
+                    if (strategyData) {
+                        setStrategy(strategyData);
+                        setStrategyForm({
+                            strategy: strategyData.strategy,
+                            description: strategyData.description || ''
+                        });
+                    }
+
                     const usersData = await clientesService.getUsers();
                     setUsers(usersData);
                 } else {
@@ -160,6 +180,66 @@ const ClientView: React.FC = () => {
         fetchClientData();
     }, [numcomitente]);
 
+    // Funciones para manejar la estrategia
+    const handleStrategyChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setStrategyForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleEditStrategy = () => {
+        setIsEditingStrategy(true);
+    };
+
+    const handleCancelEditStrategy = () => {
+        // Restablecemos los valores originales
+        if (strategy) {
+            setStrategyForm({
+                strategy: strategy.strategy,
+                description: strategy.description || ''
+            });
+        } else {
+            setStrategyForm({
+                strategy: '',
+                description: ''
+            });
+        }
+        setIsEditingStrategy(false);
+    };
+
+    const handleSaveStrategy = async () => {
+        if (!clientNumComitente) return;
+
+        try {
+            let result;
+            if (strategy?.id) {
+                // Si ya existe una estrategia, la actualizamos
+                result = await clientesService.updateStrategy(strategy.id, {
+                    ...strategy,
+                    strategy: strategyForm.strategy,
+                    description: strategyForm.description,
+                    client_number: parseInt(clientNumComitente)
+                });
+            } else {
+                // Si no existe, creamos una nueva
+                result = await clientesService.createStrategy({
+                    strategy: strategyForm.strategy,
+                    description: strategyForm.description,
+                    client_number: parseInt(clientNumComitente)
+                });
+            }
+
+            if (result) {
+                setStrategy(result);
+                setIsEditingStrategy(false);
+            }
+        } catch (err) {
+            console.error('Error al guardar la estrategia:', err);
+        }
+    };
+
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
@@ -175,9 +255,15 @@ const ClientView: React.FC = () => {
     };
 
     const addEvent = async () => {
-        if (!client || !client.id || !newEvent.event_date || !newEvent.description) return;
+        if (!client || !clientNumComitente || !newEvent.event_date || !newEvent.description || !newEvent.next_contact || !newEvent.user_id) return;
+
+        const eventToCreate = {
+            ...newEvent,
+            client_id: clientNumComitente
+        };
+
         try {
-            const createdEvent = await clientesService.createEvent(client.id, newEvent);
+            const createdEvent = await clientesService.createEvent(clientNumComitente, eventToCreate);
             if (createdEvent) {
                 setClient(prev => prev ? { ...prev, events: [...(prev.events ?? []), createdEvent] } : prev);
                 setNewEvent({ id: '', client_id: '', event_date: '', description: '', next_contact: '', user_id: '' });
@@ -214,9 +300,11 @@ const ClientView: React.FC = () => {
     };
 
     const handleSaveEditedEvent = async () => {
-        if (!client || !client.id || !eventToEdit) return;
+        if (!client || !clientNumComitente || !eventToEdit ||
+            !eventToEdit.event_date || !eventToEdit.description ||
+            !eventToEdit.next_contact || !eventToEdit.user_id) return;
         try {
-            const updatedEvent = await clientesService.updateEvent(client.id, eventToEdit);
+            const updatedEvent = await clientesService.updateEvent(clientNumComitente, eventToEdit);
             if (updatedEvent) {
                 setClient(prev => prev ? {
                     ...prev,
@@ -237,9 +325,15 @@ const ClientView: React.FC = () => {
     };
 
     const addAction = async () => {
-        if (!client || !client.id || !newAction.action_date || !newAction.description) return;
+        if (!client || !clientNumComitente || !newAction.action_date || !newAction.description || !newAction.next_contact || !newAction.user_id) return;
+
+        const actionToCreate = {
+            ...newAction,
+            client_id: clientNumComitente
+        };
+
         try {
-            const createdAction = await clientesService.createAction(client.id, newAction);
+            const createdAction = await clientesService.createAction(clientNumComitente, actionToCreate);
             if (createdAction) {
                 setClient(prev => prev ? { ...prev, actions: [...(prev.actions ?? []), createdAction] } : prev);
                 setNewAction({ id: '', client_id: '', action_date: '', description: '', next_contact: '', user_id: '' });
@@ -276,9 +370,11 @@ const ClientView: React.FC = () => {
     };
 
     const handleSaveEditedAction = async () => {
-        if (!client || !client.id || !actionToEdit) return;
+        if (!client || !clientNumComitente || !actionToEdit ||
+            !actionToEdit.action_date || !actionToEdit.description ||
+            !actionToEdit.next_contact || !actionToEdit.user_id) return;
         try {
-            const updatedAction = await clientesService.updateAction(client.id, actionToEdit);
+            const updatedAction = await clientesService.updateAction(clientNumComitente, actionToEdit);
             if (updatedAction) {
                 setClient(prev => prev ? {
                     ...prev,
@@ -341,13 +437,104 @@ const ClientView: React.FC = () => {
                             </Box>
                         );
                     })}
+                    
+                    {/* Sección de estrategia directamente integrada en la info del cliente */}
+                    <Box sx={{ mt: 2, borderTop: '1px solid #e0e0e0', pt: 2 }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                            <Typography variant="subtitle2" fontWeight="bold">
+                                Estrategia 
+                            </Typography>
+                            {!isEditingStrategy ? (
+                                <Button 
+                                    size="small" 
+                                    variant="outlined" 
+                                    startIcon={strategy ? <EditIcon /> : <AddIcon />}
+                                    onClick={handleEditStrategy}
+                                >
+                                    {strategy ? 'Editar' : 'Agregar'}
+                                </Button>
+                            ) : (
+                                <Box display="flex" gap={1}>
+                                    <Button 
+                                        size="small" 
+                                        variant="outlined" 
+                                        color="inherit"
+                                        onClick={handleCancelEditStrategy}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button 
+                                        size="small" 
+                                        variant="contained" 
+                                        color="primary"
+                                        onClick={handleSaveStrategy}
+                                        disabled={!strategyForm.strategy}
+                                    >
+                                        Guardar
+                                    </Button>
+                                </Box>
+                            )}
+                        </Box>
+                        
+                        {isEditingStrategy ? (
+                            // Formulario de edición de estrategia
+                            <Box>
+                                <TextField
+                                    label="Estrategia"
+                                    name="strategy"
+                                    value={strategyForm.strategy}
+                                    onChange={handleStrategyChange}
+                                    fullWidth
+                                    size="small"
+                                    required
+                                    margin="dense"
+                                />
+                                <TextField
+                                    label="Descripción"
+                                    name="description"
+                                    value={strategyForm.description}
+                                    onChange={handleStrategyChange}
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    size="small"
+                                    margin="dense"
+                                />
+                            </Box>
+                        ) : (
+                            // Mostrar estrategia o mensaje si no existe
+                            strategy ? (
+                                <Box>
+                                    <Box display="flex" alignItems="center" mb={1}>
+                                        <Typography variant="caption" color="textSecondary" sx={{ minWidth: '150px' }}>
+                                            Estrategia:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            {strategy.strategy}
+                                        </Typography>
+                                    </Box>
+                                    {strategy.description && (
+                                        <Box display="flex" alignItems="flex-start">
+                                            <Typography variant="caption" color="textSecondary" sx={{ minWidth: '150px' }}>
+                                                Descripción:
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {strategy.description}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Box>
+                            ) : (
+                                <Typography variant="body2" color="text.secondary" align="center" py={1}>
+                                    No hay estrategia definida para este cliente
+                                </Typography>
+                            )
+                        )}
+                    </Box>
                 </Box>
             </Paper>
         );
     };
-    
-    
-
     return (
         <div style={fixedHeightStyles.pageContainer}>
             {/* <Navbar /> */}
@@ -441,6 +628,7 @@ const ClientView: React.FC = () => {
                                                     value={newEvent.event_date}
                                                     onChange={handleEventChange}
                                                     size="small"
+                                                    required
                                                     InputLabelProps={{ shrink: true }}
                                                     sx={{ flex: 1 }} // Ocupa espacio de manera proporcional
                                                 />
@@ -452,11 +640,12 @@ const ClientView: React.FC = () => {
                                                     value={newEvent.next_contact}
                                                     onChange={handleEventChange}
                                                     size="small"
+                                                    required
                                                     InputLabelProps={{ shrink: true }}
                                                     sx={{ flex: 1 }}
                                                 />
 
-                                                <FormControl sx={{ flex: 1 }} size="small">
+                                                <FormControl sx={{ flex: 1 }} size="small" required>
                                                     <AsyncSelect
                                                         label="Asignado"
                                                         placeholder="Seleccione un asignado"
@@ -465,6 +654,7 @@ const ClientView: React.FC = () => {
                                                             setNewEvent(prev => ({ ...prev, user_id: newValue }))
                                                         }
                                                         fetchOptions={clientesService.getUsers}
+                                                        required
                                                     />
                                                 </FormControl>
                                             </Box>
@@ -478,6 +668,7 @@ const ClientView: React.FC = () => {
                                                 multiline
                                                 rows={2}
                                                 size="small"
+                                                required
                                                 sx={{ mt: 1 }}
                                             />
                                             <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
@@ -487,7 +678,7 @@ const ClientView: React.FC = () => {
                                                     size="small"
                                                     startIcon={<AddIcon />}
                                                     onClick={addEvent}
-                                                    disabled={!newEvent.event_date || !newEvent.description}
+                                                    disabled={!newEvent.event_date || !newEvent.description || !newEvent.next_contact || !newEvent.user_id}
                                                 >
                                                     Agregar
                                                 </Button>
@@ -544,6 +735,7 @@ const ClientView: React.FC = () => {
                                                     value={newAction.action_date}
                                                     onChange={handleActionChange}
                                                     size="small"
+                                                    required
                                                     InputLabelProps={{ shrink: true }}
                                                     sx={{ width: '33%' }}
                                                 />
@@ -554,6 +746,7 @@ const ClientView: React.FC = () => {
                                                     value={newAction.next_contact}
                                                     onChange={handleActionChange}
                                                     size="small"
+                                                    required
                                                     InputLabelProps={{ shrink: true }}
                                                     sx={{ width: '33%' }}
                                                 />
@@ -561,15 +754,17 @@ const ClientView: React.FC = () => {
                                                     fullWidth
                                                     size="small"
                                                     sx={{ width: '33%' }}
+                                                    required
                                                 >
                                                     <AsyncSelect
                                                         label="Asignado"
                                                         placeholder="Seleccione un asignado"
-                                                        value={newEvent.user_id}
+                                                        value={newAction.user_id} // CORREGIDO: Usa newAction en lugar de newEvent
                                                         onChange={(newValue) =>
-                                                            setNewEvent(prev => ({ ...prev, user_id: newValue }))
+                                                            setNewAction(prev => ({ ...prev, user_id: newValue })) // CORREGIDO: Actualiza newAction
                                                         }
                                                         fetchOptions={clientesService.getUsers}
+                                                        required
                                                     />
                                                 </FormControl>
 
@@ -583,6 +778,7 @@ const ClientView: React.FC = () => {
                                                 multiline
                                                 rows={2}
                                                 size="small"
+                                                required
                                                 sx={{ mt: 1 }}
                                             />
                                             <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
@@ -592,7 +788,7 @@ const ClientView: React.FC = () => {
                                                     size="small"
                                                     startIcon={<AddIcon />}
                                                     onClick={addAction}
-                                                    disabled={!newAction.action_date || !newAction.description}
+                                                    disabled={!newAction.action_date || !newAction.description || !newAction.next_contact || !newAction.user_id}
                                                 >
                                                     Agregar
                                                 </Button>
@@ -600,6 +796,7 @@ const ClientView: React.FC = () => {
                                         </Box>
                                     </Box>
                                 )}
+
                             </div>
                         </Card>
                     )}
@@ -618,6 +815,7 @@ const ClientView: React.FC = () => {
                         onChange={handleEditEventChange}
                         fullWidth
                         margin="dense"
+                        required
                         InputLabelProps={{ shrink: true }}
                     />
                     <TextField
@@ -628,21 +826,23 @@ const ClientView: React.FC = () => {
                         onChange={handleEditEventChange}
                         fullWidth
                         margin="dense"
+                        required
                         InputLabelProps={{ shrink: true }}
                     />
                     <FormControl
                         fullWidth
-                        size="small"
-                        sx={{ width: '33%' }}
+                        margin="dense"
+                        required
                     >
                         <AsyncSelect
                             label="Asignado"
                             placeholder="Seleccione un asignado"
-                            value={newEvent.user_id}
+                            value={eventToEdit?.user_id || ''} // CORREGIDO: Usa eventToEdit en lugar de newEvent
                             onChange={(newValue) =>
-                                setNewEvent(prev => ({ ...prev, user_id: newValue }))
+                                setEventToEdit(prev => prev ? { ...prev, user_id: newValue } : prev) // CORREGIDO: Actualiza eventToEdit
                             }
                             fetchOptions={clientesService.getUsers}
+                            required
                         />
                     </FormControl>
 
@@ -655,11 +855,17 @@ const ClientView: React.FC = () => {
                         margin="dense"
                         multiline
                         rows={3}
+                        required
                     />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseEditEvent}>Cancelar</Button>
-                    <Button onClick={handleSaveEditedEvent} variant="contained" color="primary">
+                    <Button
+                        onClick={handleSaveEditedEvent}
+                        variant="contained"
+                        color="primary"
+                        disabled={!eventToEdit?.event_date || !eventToEdit?.description || !eventToEdit?.next_contact || !eventToEdit?.user_id}
+                    >
                         Guardar
                     </Button>
                 </DialogActions>
@@ -667,59 +873,68 @@ const ClientView: React.FC = () => {
 
             {/* Modal para editar acción */}
             <Dialog open={editActionDialogOpen} onClose={handleCloseEditAction}>
-  <DialogTitle>Editar Acción</DialogTitle>
-  <DialogContent>
-    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-      <TextField
-        label="Fecha"
-        name="action_date"
-        type="date"
-        value={actionToEdit?.action_date || ''}
-        onChange={handleEditActionChange}
-        margin="dense"
-        InputLabelProps={{ shrink: true }}
-        sx={{ flex: 1 }}
-      />
-      <TextField
-        label="Vencimiento"
-        name="next_contact"
-        type="date"
-        value={actionToEdit?.next_contact || ''}
-        onChange={handleEditActionChange}
-        margin="dense"
-        InputLabelProps={{ shrink: true }}
-        sx={{ flex: 1 }}
-      />
-      <FormControl fullWidth size="small" sx={{ flex: 1 }}>
-        <AsyncSelect
-          label="Asignado"
-          placeholder="Seleccione un asignado"
-          value={actionToEdit?.user_id || ''}
-          onChange={(newValue) =>
-            setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
-          }
-          fetchOptions={clientesService.getUsers}
-        />
-      </FormControl>
-    </Box>
-    <TextField
-      label="Descripción"
-      name="description"
-      value={actionToEdit?.description || ''}
-      onChange={handleEditActionChange}
-      fullWidth
-      margin="dense"
-      multiline
-      rows={3}
-    />
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseEditAction}>Cancelar</Button>
-    <Button onClick={handleSaveEditedAction} variant="contained" color="primary">
-      Guardar
-    </Button>
-  </DialogActions>
-</Dialog>
+                <DialogTitle>Editar Acción</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+                        <TextField
+                            label="Fecha"
+                            name="action_date"
+                            type="date"
+                            value={actionToEdit?.action_date || ''}
+                            onChange={handleEditActionChange}
+                            margin="dense"
+                            required
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ flex: 1 }}
+                        />
+                        <TextField
+                            label="Vencimiento"
+                            name="next_contact"
+                            type="date"
+                            value={actionToEdit?.next_contact || ''}
+                            onChange={handleEditActionChange}
+                            margin="dense"
+                            required
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ flex: 1 }}
+                        />
+                        <FormControl fullWidth margin="dense" sx={{ flex: 1 }} required>
+                            <AsyncSelect
+                                label="Asignado"
+                                placeholder="Seleccione un asignado"
+                                value={actionToEdit?.user_id || ''}
+                                onChange={(newValue) =>
+                                    setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
+                                }
+                                fetchOptions={clientesService.getUsers}
+                                required
+                            />
+                        </FormControl>
+                    </Box>
+                    <TextField
+                        label="Descripción"
+                        name="description"
+                        value={actionToEdit?.description || ''}
+                        onChange={handleEditActionChange}
+                        fullWidth
+                        margin="dense"
+                        multiline
+                        rows={3}
+                        required
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseEditAction}>Cancelar</Button>
+                    <Button
+                        onClick={handleSaveEditedAction}
+                        variant="contained"
+                        color="primary"
+                        disabled={!actionToEdit?.action_date || !actionToEdit?.description || !actionToEdit?.next_contact || !actionToEdit?.user_id}
+                    >
+                        Guardar
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 };
