@@ -1,8 +1,8 @@
-// src/services/clientesService.ts
+// src/services/clientesService.ts (ampliado)
 
 import axios from 'axios';
-import { Client, ClientEvent, ClientAction, Strategy } from '../types/Client';
-import { API_BASE_URL } from '../config/constants'; /* Es la URL de la api */
+import { Client, ClientAction, Strategy, Risk, Instrument } from '../types/Client';
+import { API_BASE_URL } from '../config/constants';
 
 // Configuración de interceptores para depuración
 axios.interceptors.request.use(request => {
@@ -35,17 +35,8 @@ interface BackendClient {
   Oficial: string;
   Referente: string;
   EstaAnulado: string;
-  events?: BackendClientEvent[];
   actions?: BackendClientAction[];
-}
-
-interface BackendClientEvent {
-  id: number | string;
-  client_number: string;
-  event_date: string | null;
-  description: string | null;
-  next_contact: string | null;
-  user_id?: string;
+  risks?: BackendRisk[];
 }
 
 interface BackendClientAction {
@@ -57,6 +48,11 @@ interface BackendClientAction {
   user_id?: string;
 }
 
+interface BackendRisk {
+  id: string;
+  name: string;
+}
+
 interface PaginatedResponse<T> {
   current_page: number;
   data: T[];
@@ -66,14 +62,7 @@ interface PaginatedResponse<T> {
 
 // Mapeo: transformar un cliente del backend al formato del front
 function mapBackendClientToFrontend(client: BackendClient): Client {
-  const mappedEvents: ClientEvent[] = (client.events || []).map(e => ({
-    id: e.id,
-    client_id: e.client_number,
-    event_date: e.event_date,
-    description: e.description,
-    next_contact: e.next_contact,
-    user_id: e.user_id || ''
-  }));
+  // Mapeo de acciones
   const mappedActions: ClientAction[] = (client.actions || []).map(a => ({
     id: a.id,
     client_id: a.client_number,
@@ -82,6 +71,27 @@ function mapBackendClientToFrontend(client: BackendClient): Client {
     next_contact: a.next_contact,
     user_id: a.user_id || ''
   }));
+
+  // Calcular fecha de vencimiento basado en la próxima acción pendiente
+  let fechaVencimiento = null;
+  if (mappedActions.length > 0) {
+    const sortedActions = [...mappedActions].sort((a, b) => {
+      if (!a.next_contact) return 1;
+      if (!b.next_contact) return -1;
+      return new Date(a.next_contact).getTime() - new Date(b.next_contact).getTime();
+    });
+    
+    if (sortedActions[0].next_contact) {
+      fechaVencimiento = sortedActions[0].next_contact;
+    }
+  }
+
+  // Mapeo de riesgos
+  const mappedRisks = (client.risks || []).map(r => ({
+    id: r.id,
+    name: r.name
+  }));
+
   return {
     id: client.CodComitente,
     numcomitente: client.CodComitente,
@@ -92,40 +102,135 @@ function mapBackendClientToFrontend(client: BackendClient): Client {
     oficial: client.Oficial,
     referente: client.Referente,
     activo: client.EstaAnulado === "0",
-    events: mappedEvents,
     actions: mappedActions,
-    // Se pueden incluir otras propiedades dinámicamente mediante un index signature en el type
-  };
-}
-
-// Funciones para mapear datos del front para crear o actualizar
-function mapFrontendClientToBackendForCreate(client: Omit<Client, 'id'>): Partial<BackendClient> {
-  return {
-    Descripcion: client.nombre,
-    Actividad: client.sector,
-    EMail: client.mail,
-    CUIT: client.cuit,
-    Oficial: client.oficial,
-    Referente: client.referente,
-    CodComitente: client.numcomitente,
-    EstaAnulado: client.activo ? "0" : "1"
-  };
-}
-
-function mapFrontendClientToBackendForUpdate(client: Partial<Client>, id: string): Partial<BackendClient> {
-  return {
-    Descripcion: client.nombre || '',
-    Actividad: client.sector || '',
-    EMail: client.mail || '',
-    CUIT: client.cuit || '',
-    Oficial: client.oficial || '',
-    Referente: client.referente || '',
-    CodComitente: client.numcomitente || id,
-    EstaAnulado: (client.activo !== undefined) ? (client.activo ? "0" : "1") : "0"
+    risks: mappedRisks,
+    fechaVencimiento: fechaVencimiento
   };
 }
 
 export const clientesService = {
+  // Obtener clientes con paginación, filtrado y ordenamiento
+  async getClients(
+    page = 1,
+    statusFilter: 'todos' | 'activos' | 'inactivos' = 'todos',
+    riskFilter: string | null = null,
+    sortField: string | null = null,
+    sortDirection: 'ascending' | 'descending' | null = null
+  ): Promise<{
+    data: Client[];
+    pagination: {
+      currentPage: number;
+      lastPage: number;
+      total: number;
+    };
+  }> {
+    try {
+      // Construir la URL del endpoint con los parámetros de consulta
+      let url = `${API_BASE_URL}/clients?page=${page}&status=${statusFilter}`;
+  
+      if (riskFilter) {
+        url += `&risk_id=${riskFilter}`;
+      }
+  
+      if (sortField && sortDirection) {
+        const direction = sortDirection === 'ascending' ? 'asc' : 'desc';
+        url += `&sort_by=${sortField}&sort_dir=${direction}`;
+      }
+  
+      const response = await axios.get<PaginatedResponse<BackendClient>>(url);
+  
+      // Mapear clientes y mantener la información de paginación
+      const clients = response.data.data.map(mapBackendClientToFrontend);
+      const pagination = {
+        currentPage: response.data.current_page,
+        lastPage: response.data.last_page,
+        total: response.data.total
+      };
+  
+      return {
+        data: clients,
+        pagination
+      };
+    } catch (error) {
+      console.error('Error al obtener clientes:', error);
+      return {
+        data: [],
+        pagination: {
+          currentPage: 1,
+          lastPage: 1,
+          total: 0
+        }
+      };
+    }
+  },
+
+  // Buscar clientes (similar a searchProspectos)
+  async searchClients(
+    searchTerm: string,
+    page = 1,
+    statusFilter: 'todos' | 'activos' | 'inactivos' = 'todos',
+    riskFilter: string | null = null,
+    sortField: string | null = null,
+    sortDirection: 'ascending' | 'descending' | null = null
+  ): Promise<{
+    data: Client[];
+    pagination: {
+      currentPage: number;
+      lastPage: number;
+      total: number;
+    };
+  }> {
+    try {
+      // Construir la URL base para búsqueda
+      let url = `${API_BASE_URL}/clients/search`;
+      
+      // Agregar parámetros de consulta
+      let params = new URLSearchParams();
+      params.append('term', searchTerm);
+      params.append('page', page.toString());
+      params.append('status', statusFilter);
+      
+      // Filtro por riesgo
+      if (riskFilter && riskFilter !== 'null') {
+        params.append('risk_id', riskFilter);
+      }
+      
+      // Ordenamiento
+      if (sortField && sortDirection) {
+        const direction = sortDirection === 'ascending' ? 'asc' : 'desc';
+        params.append('sort_field', sortField);
+        params.append('sort_direction', direction);
+      }
+      
+      url += `?${params.toString()}`;
+
+      const response = await axios.get<PaginatedResponse<BackendClient>>(url);
+      
+      // Mapear clientes y mantener la información de paginación
+      const clients = response.data.data.map(mapBackendClientToFrontend);
+      const pagination = {
+        currentPage: response.data.current_page,
+        lastPage: response.data.last_page,
+        total: response.data.total
+      };
+
+      return {
+        data: clients,
+        pagination
+      };
+    } catch (error) {
+      console.error('Error al buscar clientes:', error);
+      return {
+        data: [],
+        pagination: {
+          currentPage: 1,
+          lastPage: 1,
+          total: 0
+        }
+      };
+    }
+  },
+
   // Obtiene el detalle de un cliente usando CodComitente
   async getClientByCodComitente(cod: string): Promise<Client | null> {
     try {
@@ -158,42 +263,6 @@ export const clientesService = {
     }
   },
 
-  // Crear un evento para un cliente
-  async createEvent(clientId: string, event: ClientEvent): Promise<ClientEvent | null> {
-    try {
-      const url = `${API_BASE_URL}/clients/${clientId}/events/create`;
-      const response = await axios.post(url, event);
-      return response.data.event;
-    } catch (error) {
-      console.error('Error al crear evento:', error);
-      return null;
-    }
-  },
-
-  // Actualizar un evento para un cliente
-  async updateEvent(clientId: string, event: ClientEvent): Promise<ClientEvent | null> {
-    try {
-      const url = `${API_BASE_URL}/clients/${clientId}/events/update`;
-      const response = await axios.post(url, event);
-      return response.data.event;
-    } catch (error) {
-      console.error('Error al actualizar evento:', error);
-      return null;
-    }
-  },
-
-  // Eliminar un evento para un cliente
-  async deleteEvent(eventId: string): Promise<boolean> {
-    try {
-      const url = `${API_BASE_URL}/clients/${eventId}/events`;
-      await axios.delete(url);
-      return true;
-    } catch (error) {
-      console.error('Error al eliminar evento:', error);
-      return false;
-    }
-  },
-
   // Crear una acción para un cliente
   async createAction(clientId: string, action: ClientAction): Promise<ClientAction | null> {
     try {
@@ -206,10 +275,10 @@ export const clientesService = {
     }
   },
 
-  // Actualizar una acción para un cliente
-  async updateAction(clientId: string, action: ClientAction): Promise<ClientAction | null> {
+  async updateAction(actionId: string, action: ClientAction): Promise<ClientAction | null> {
     try {
-      const url = `${API_BASE_URL}/clients/${clientId}/actions/update`;
+      // Utilizando la ruta correcta según tu backend
+      const url = `${API_BASE_URL}/clients/${actionId}/actions/update`;
       const response = await axios.post(url, action);
       return response.data.action;
     } catch (error) {
@@ -234,13 +303,11 @@ export const clientesService = {
   async updateClientFull(
     id: string,
     data: Partial<Client>,
-    events: ClientEvent[] = [],
     actions: ClientAction[] = []
   ): Promise<Client | null> {
     try {
       const backendData = {
-        ...mapFrontendClientToBackendForUpdate(data, id),
-        events,
+        ...data,
         actions
       };
       const url = `${API_BASE_URL}/clients/updateFull`;
@@ -257,18 +324,6 @@ export const clientesService = {
     }
   },
 
-  async getEventsByCodComitente(cod: string): Promise<ClientEvent[]> {
-    try {
-      const url = `${API_BASE_URL}/clients/${cod}/events`;
-      const response = await axios.get(url);
-      // Se asume que la respuesta es { data: [...] }
-      return response.data.data || [];
-    } catch (error) {
-      console.error('Error al obtener eventos:', error);
-      return [];
-    }
-  },
-
   async getActionsByCodComitente(cod: string): Promise<ClientAction[]> {
     try {
       const url = `${API_BASE_URL}/clients/${cod}/actions`;
@@ -280,17 +335,17 @@ export const clientesService = {
     }
   },
 
-  async getStrategyByClientNumber(clientNumber: string) {
+  async getStrategyByClientNumber(clientNumber: string): Promise<Strategy | null> {
     try {
       const response = await axios.get(`${API_BASE_URL}/clients/strategies/${clientNumber}`);
-      return response.data.data; // Obtener la propiedad data de la respuesta
+      return response.data.data;
     } catch (error) {
       console.error('Error al obtener estrategia del cliente:', error);
       return null;
     }
   },
 
-  async createStrategy(strategyData: Partial<Strategy>) {
+  async createStrategy(strategyData: Partial<Strategy>): Promise<Strategy | null> {
     try {
       const response = await axios.post(`${API_BASE_URL}/clients/strategies`, strategyData);
       return response.data.data;
@@ -300,7 +355,7 @@ export const clientesService = {
     }
   },
 
-  async updateStrategy(id: string | number, strategyData: Partial<Strategy>) {
+  async updateStrategy(id: string | number, strategyData: Partial<Strategy>): Promise<Strategy | null> {
     try {
       // Cambia a POST con /update como sufijo
       const response = await axios.post(`${API_BASE_URL}/clients/strategies/${id}/update`, strategyData);
@@ -309,6 +364,62 @@ export const clientesService = {
       console.error('Error al actualizar estrategia:', error);
       return null;
     }
+  },
+
+  // Obtener riesgos de un cliente
+  async getClientRisks(clientId: string): Promise<Risk[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/clients/${clientId}/risks`);
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error al obtener riesgos del cliente:', error);
+      return [];
+    }
+  },
+
+  // Obtener todos los riesgos disponibles
+  async getAllRisks(): Promise<Risk[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/risks`);
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error al obtener todos los riesgos:', error);
+      return [];
+    }
+  },
+
+  // Obtener instrumentos asociados a un riesgo
+  async getRiskInstruments(riskId: string | number): Promise<Instrument[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/risks/${riskId}/instruments`);
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error al obtener instrumentos del riesgo:', error);
+      return [];
+    }
+  },
+
+  // Agregar un riesgo a un cliente
+  async addRiskToClient(clientId: string, riskId: string | number): Promise<boolean> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/clients/${clientId}/risks`, { risk_id: riskId });
+      return response.data.success || false;
+    } catch (error) {
+      console.error('Error al agregar riesgo al cliente:', error);
+      return false;
+    }
+  },
+
+  // Quitar un riesgo de un cliente
+  async removeRiskFromClient(clientId: string, riskId: string | number): Promise<boolean> {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/clients/${clientId}/risks/${riskId}`);
+      return response.data.success || false;
+    } catch (error) {
+      console.error('Error al quitar riesgo del cliente:', error);
+      return false;
+    }
   }
 };
+
 export default clientesService;

@@ -19,18 +19,22 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid
+  Grid,
+  SelectChangeEvent,
+  Chip,
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { FormControlLabel, Checkbox } from '@mui/material';
 
-
 import Header from '../../components/Header/Header';
 import { prospectoService } from '../../services/prospectoService';
-import { Prospecto, EventoType, AccionType } from '../../types/Prospecto';
+import { Prospecto, AccionType } from '../../types/Prospecto';
 import AsyncSelect from '../../components/AsyncSelect/AsyncSelect';
 import { getUsers } from '../../services/apiService';
 import { getUserNameById } from '../../services/userService';
@@ -98,23 +102,19 @@ const ProspectoView = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
 
-  const [newEvent, setNewEvent] = useState<{
-    event_date: string;
-    description: string;
-    next_contact: string;
-    user_id: string;
-  }>({ event_date: "", description: "", next_contact: "", user_id: "" });
-
   const [newAction, setNewAction] = useState<{
     action_date: string;
     description: string;
     next_contact: string;
     user_id: string;
-  }>({ action_date: "", description: "", next_contact: "", user_id: "" });
-
-  // Estados para editar evento mediante modal
-  const [editEventDialogOpen, setEditEventDialogOpen] = useState<boolean>(false);
-  const [eventToEdit, setEventToEdit] = useState<EventoType | null>(null);
+    status: 'abierto' | 'cerrado' | 'vencido';
+  }>({
+    action_date: "",
+    description: "",
+    next_contact: "",
+    user_id: "",
+    status: "abierto"
+  });
 
   // Estados para editar acción mediante modal
   const [editActionDialogOpen, setEditActionDialogOpen] = useState<boolean>(false);
@@ -159,6 +159,25 @@ const ProspectoView = () => {
     fetchProspecto();
   }, [id]);
 
+  const handleStatusChange = (event: SelectChangeEvent<'abierto' | 'cerrado' | 'vencido'>) => {
+    setNewAction(prev => ({
+      ...prev,
+      status: event.target.value as 'abierto' | 'cerrado' | 'vencido'
+    }));
+  };
+
+  // Manejador específico para el Select de MUI en la edición de acción
+  const handleEditStatusChange = (event: SelectChangeEvent<'abierto' | 'cerrado' | 'vencido'>) => {
+    if (!actionToEdit) return;
+    setActionToEdit(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        status: event.target.value as 'abierto' | 'cerrado' | 'vencido'
+      };
+    });
+  };
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
@@ -167,91 +186,27 @@ const ProspectoView = () => {
     navigate('/crm/prospectos');
   };
 
-  // Manejo de cambios en el formulario de creación de evento
-  const handleEventChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewEvent(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Crear evento: llama al service y actualiza el estado
-  const addEvent = async () => {
-    if (!prospecto || !prospecto.id || !newEvent.event_date || !newEvent.description) return;
-    const prospectoId = prospecto.id as string;
-    try {
-      const eventoCreado = await prospectoService.createEvent(prospectoId, newEvent);
-      if (eventoCreado) {
-        setProspecto(prev => ({
-          ...prev!,
-          events: [...(prev?.events || []), eventoCreado]
-        }));
-        setNewEvent({ event_date: "", description: "", next_contact: "", user_id: "" });
-      }
-    } catch (err) {
-      console.error('Error al crear evento:', err);
-    }
-  };
-
-  // Eliminar evento del estado
-  const deleteEvent = (eventId: number | string | undefined) => {
-    if (!prospecto || eventId === undefined) return;
-    const updatedEvents = (prospecto.events || []).filter(event => event.id !== eventId);
-    setProspecto({ ...prospecto, events: updatedEvents });
-  };
-
-  // Abrir modal de edición de evento
-  const handleOpenEditEvent = (event: EventoType) => {
-    setEventToEdit(event);
-    setEditEventDialogOpen(true);
-  };
-
-  const handleCloseEditEvent = () => {
-    setEditEventDialogOpen(false);
-    setEventToEdit(null);
-  };
-
-  const handleEditEventChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!eventToEdit) return;
-    const { name, value } = e.target;
-    setEventToEdit(prev => prev ? { ...prev, [name]: value } : null);
-  };
-
-  // Guardar cambios en evento editado
-  const handleSaveEditedEvent = async () => {
-    if (!prospecto || !prospecto.id || !eventToEdit) return;
-    const prospectoId = prospecto.id as string;
-    try {
-      const eventoActualizado = await prospectoService.updateEvent(prospectoId, eventToEdit);
-      if (eventoActualizado) {
-        setProspecto(prev => ({
-          ...prev!,
-          events: (prev!.events || []).map(e => e.id === eventoActualizado.id ? eventoActualizado : e)
-        }));
-      }
-    } catch (err) {
-      console.error('Error al actualizar evento:', err);
-    } finally {
-      handleCloseEditEvent();
-    }
-  };
-
   // Manejo de cambios en el formulario de creación de acción
-  const handleActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleActionChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setNewAction(prev => ({ ...prev, [name]: value }));
+    setNewAction((prev) => ({ ...prev, [name]: value }));
   };
+
 
   // Crear acción: llama al service y actualiza el estado
   const addAction = async () => {
     if (!prospecto || !prospecto.id || !newAction.action_date || !newAction.description) return;
     const prospectoId = prospecto.id as string;
     try {
-      const accionCreada = await prospectoService.createAction(prospectoId, newAction);
+      const accionCreada = await prospectoService.createAction(prospectoId, newAction as AccionType);
       if (accionCreada) {
         setProspecto(prev => ({
           ...prev!,
           actions: [...(prev?.actions || []), accionCreada]
         }));
-        setNewAction({ action_date: "", description: "", next_contact: "", user_id: "" });
+        setNewAction({ action_date: "", description: "", next_contact: "", user_id: "", status: "abierto" });
       }
     } catch (err) {
       console.error('Error al crear acción:', err);
@@ -274,24 +229,85 @@ const ProspectoView = () => {
     setEditActionDialogOpen(false);
     setActionToEdit(null);
   };
+  // 1. Agregar la función formatDate mejorada
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString + 'T00:00:00');  // Añade hora para evitar problemas de zona horaria
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'UTC'  // Esto puede ayudar a mantener consistencia
+    });
+  };
 
-  const handleEditActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCloseAction = async (actionId: string | number) => {
+    if (!prospecto) return;
+
+    try {
+      const actionToClose = prospecto.actions?.find(a => a.id === actionId) as AccionType;
+      if (!actionToClose) return;
+
+      const updatedAction: AccionType = {
+        ...actionToClose,
+        status: 'cerrado' as 'abierto' | 'cerrado' | 'vencido'
+      };
+
+      // Pasar el ID de la acción como primer parámetro
+      const result = await prospectoService.updateAction(
+        actionId.toString(),
+        updatedAction
+      );
+
+      if (result) {
+        setProspecto(prev => {
+          if (!prev) return null;
+          const updatedActions = (prev.actions || []).map(a =>
+            a.id === actionId ? { ...a, status: 'cerrado' as 'abierto' | 'cerrado' | 'vencido' } : a
+          );
+          return { ...prev, actions: updatedActions };
+        });
+      }
+    } catch (err) {
+      console.error('Error al cerrar la acción:', err);
+    }
+  };
+
+  // 3. Modificar handleEditActionChange para manejar diferentes tipos de eventos
+  const handleEditActionChange = (
+    e: SelectChangeEvent<any> | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     if (!actionToEdit) return;
     const { name, value } = e.target;
     setActionToEdit(prev => prev ? { ...prev, [name]: value } : null);
   };
 
-  // Guardar cambios en acción editada
+  // 4. Actualizar handleSaveEditedAction para usar el ID de la acción
   const handleSaveEditedAction = async () => {
-    if (!prospecto || !prospecto.id || !actionToEdit) return;
-    const prospectoId = prospecto.id as string;
+    if (!prospecto || !actionToEdit || !actionToEdit.id) return;
+
     try {
-      const accionActualizada = await prospectoService.updateAction(prospectoId, actionToEdit);
+      // Usar el ID de la acción como primer parámetro
+      const accionActualizada = await prospectoService.updateAction(
+        actionToEdit.id.toString(),
+        actionToEdit
+      );
+
       if (accionActualizada) {
-        setProspecto(prev => ({
-          ...prev!,
-          actions: (prev!.actions || []).map(a => a.id === accionActualizada.id ? accionActualizada : a)
-        }));
+        const updatedActions = (prospecto.actions || []).map(a =>
+          a.id === accionActualizada.id ? accionActualizada : a
+        );
+
+        // Añadir conversión de tipo explícita
+        setProspecto(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            actions: updatedActions,
+            // Asegurar que ultimoContacto nunca sea undefined
+            ultimoContacto: prev.ultimoContacto || null
+          } as Prospecto;  // Forzar el tipo Prospecto
+        });
       }
     } catch (err) {
       console.error('Error al actualizar acción:', err);
@@ -305,13 +321,11 @@ const ProspectoView = () => {
     try {
       const prospectoToSave = {
         ...prospecto,
-        events: prospecto.events || [],
         actions: prospecto.actions || [],
       };
       const updatedProspect = await prospectoService.updateProspectoFull(
         id,
         prospectoToSave,
-        prospecto.events,
         prospecto.actions
       );
       if (updatedProspect) {
@@ -322,6 +336,13 @@ const ProspectoView = () => {
     }
   };
 
+  const getStatusColor = (status: string | undefined) => {
+    switch (status) {
+      case 'cerrado': return '#4CAF50'; // Verde
+      case 'vencido': return '#F44336'; // Rojo
+      default: return '#2196F3'; // Azul para "abierto" o estado por defecto
+    }
+  };
 
   return (
     <div style={fixedHeightStyles.pageContainer}>
@@ -342,44 +363,17 @@ const ProspectoView = () => {
               Volver
             </Button>
             <div className={styles.countContainer}>
-              <Typography variant="body2">Eventos: {(prospecto?.events || []).length}</Typography>
               <Typography variant="body2">Acciones: {(prospecto?.actions || []).length}</Typography>
             </div>
           </Box>
           <Typography variant="h5" gutterBottom>
             {prospecto?.nombreCliente || 'Detalle de Prospecto'}
           </Typography>
-          <Paper elevation={0} style={fixedHeightStyles.summaryCard} className={styles.summaryCard}>
-            <Box display="flex" flexWrap="wrap" gap={2} p={1}>
-              {/* <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Referente</Typography>
-                <Typography variant="body2">{prospecto?.referente || "—"}</Typography>
-              </Box>
-              <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Oficial</Typography>
-                <Typography variant="body2">{prospecto?.oficial || "—"}</Typography>
-              </Box> */}
-
-              <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Último contacto</Typography>
-                <Typography variant="body2">{prospecto?.ultimoContacto || "—"}</Typography>
-              </Box>
-              {/* <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Tipo Cliente</Typography>
-                <Typography variant="body2">{prospecto?.cargo_contacto || "—"}</Typography>
-              </Box> */}
-              {/* <Box className={styles.infoItem}>
-                <Typography variant="caption" color="textSecondary">Estado</Typography>
-                <Typography variant="body2">{prospecto?.activo || "—"}</Typography>
-              </Box> */}
-            </Box>
-          </Paper>
 
           {prospecto && (
             <Card style={fixedHeightStyles.formCard}>
               <Tabs value={activeTab} onChange={handleTabChange} className={styles.tabs} variant="fullWidth">
                 <Tab label="Datos del Prospecto" />
-                <Tab label="Eventos" />
                 <Tab label="Acciones" />
               </Tabs>
               <div style={fixedHeightStyles.tabContent}>
@@ -397,18 +391,18 @@ const ProspectoView = () => {
                             setProspecto({ ...prospecto, nombreCliente: e.target.value })
                           }
                         />
-                          <TextField
-                            label="Sector/Industria"
-                            name="Sector/Industria"
-                            value={prospecto.sector_industria || ''}
-                            onChange={(e) =>
-                              setProspecto({ ...prospecto, sector_industria: e.target.value })
-                            }
-                            fullWidth
-                            margin="normal"
-                            size="small"
-                            variant="outlined"
-                          />
+                        <TextField
+                          label="Sector/Industria"
+                          name="Sector/Industria"
+                          value={prospecto.sector_industria || ''}
+                          onChange={(e) =>
+                            setProspecto({ ...prospecto, sector_industria: e.target.value })
+                          }
+                          fullWidth
+                          margin="normal"
+                          size="small"
+                          variant="outlined"
+                        />
 
                         <FormControlLabel
                           label="¿Ya es cliente?"
@@ -420,7 +414,7 @@ const ProspectoView = () => {
                                 setProspecto({
                                   ...prospecto,
                                   yaEsCliente: e.target.checked,
-                                  numcomitente: e.target.checked ? prospecto.numcomitente : ''
+                                  numComitente: e.target.checked ? prospecto.numComitente : ''
                                 })
                               }
                             />
@@ -446,19 +440,6 @@ const ProspectoView = () => {
                           }
                           fetchOptions={getUsers}
                         />
-
-                        <TextField
-                          label="Último contacto"
-                          type="date"
-                          value={prospecto.ultimoContacto || ''}
-                          fullWidth
-                          margin="normal"
-                          size="small"
-                          InputLabelProps={{ shrink: true }}
-                          onChange={(e) =>
-                            setProspecto({ ...prospecto, ultimoContacto: e.target.value })
-                          }
-                        />
                       </div>
                     </div>
 
@@ -466,7 +447,7 @@ const ProspectoView = () => {
                     <div className={styles.additionalContactInfo}>
                       <Divider sx={{ my: 0.5 }} />
                       <Typography variant="h6" gutterBottom>
-                      Información de contacto del cliente
+                        Información de contacto del cliente
                       </Typography>
 
                       <Grid container spacing={2}>
@@ -555,234 +536,200 @@ const ProspectoView = () => {
 
                 {activeTab === 1 && (
                   <div style={fixedHeightStyles.tabsPanel}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Eventos ({(prospecto.events || []).length})
-                    </Typography>
-
-                    <div style={fixedHeightStyles.listContainer}>
-                      {(prospecto.events || []).length > 0 ? (
-                        (prospecto.events || []).map((event) => (
-                          <Card key={event.id ?? Math.random()} variant="outlined" sx={{ mb: 1, p: 1 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                              <div>
-                                <Typography variant="subtitle2">
-                                  Fecha: {event.event_date}
-                                </Typography>
-                                <Typography variant="body2" mt={0.5}>
-                                  {event.description}
-                                </Typography>
-                                {event.next_contact && (
-                                  <Typography variant="caption" color="primary" display="block">
-                                    Próximo evento: {event.next_contact}
-                                  </Typography>
-                                )}
-                              </div>
-                              <Box>
-                                <IconButton size="small" onClick={() => handleOpenEditEvent(event)}>
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => event.id !== undefined && deleteEvent(event.id)}
-                                >
-                                  {/* <DeleteIcon fontSize="small" /> */}
-                                </IconButton>
-                              </Box>
-                            </Box>
-                          </Card>
-                        ))
-                      ) : (
-                        <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', my: 2 }}>
-                          No hay eventos registrados
-                        </Typography>
-                      )}
-                    </div>
-
-                    <div style={fixedHeightStyles.addForm}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                        Agregar nuevo evento
+                    {/* Header de la sección de acciones con contadores */}
+                    <Box sx={{
+                      p: 2,
+                      backgroundColor: '#f5f5f5',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <Typography variant="subtitle1" fontWeight="medium">
+                        Acciones ({(prospecto?.actions || []).length})
                       </Typography>
-
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <TextField
-                          label="Fecha"
-                          name="event_date"
-                          type="date"
-                          value={newEvent.event_date}
-                          onChange={handleEventChange}
+                      <Box>
+                        <Chip
+                          icon={<AccessTimeIcon fontSize="small" />}
+                          label={`Abiertos: ${(prospecto?.actions || []).filter(a => a.status === 'abierto').length}`}
                           size="small"
-                          InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
-                        />
-
-                        <TextField
-                          label="Próximo evento"
-                          name="next_contact"
-                          type="date"
-                          value={newEvent.next_contact}
-                          onChange={handleEventChange}
-                          size="small"
-                          InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
-                        />
-
-                        <Box className={styles.asyncSelectContainer}>
-                          <AsyncSelect
-                            label="Asignado"
-                            value={newEvent.user_id}
-                            placeholder="Seleccione un asignado"
-                            onChange={(newValue) =>
-                              setNewEvent((prev) => ({ ...prev, user_id: newValue }))
-                            }
-                            fetchOptions={getUsers}
-                            className={styles.asyncSelect}
-                          />
-                        </Box>
-                      </Box>
-
-                      <TextField
-                        label="Descripción"
-                        name="description"
-                        value={newEvent.description}
-                        onChange={handleEventChange}
-                        fullWidth
-                        multiline
-                        rows={2}
-                        size="small"
-                        sx={{ mt: 1 }}
-                      />
-
-                      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                          variant="contained"
                           color="primary"
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        />
+                        <Chip
+                          icon={<ErrorIcon fontSize="small" />}
+                          label={`Vencidos: ${(prospecto?.actions || []).filter(a => a.status === 'vencido').length}`}
                           size="small"
-                          startIcon={<AddIcon />}
-                          onClick={addEvent}
-                          disabled={!newEvent.event_date || !newEvent.description}
-                        >
-                          Agregar
-                        </Button>
+                          color="error"
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        />
+                        <Chip
+                          icon={<CheckCircleIcon fontSize="small" />}
+                          label={`Cerrados: ${(prospecto?.actions || []).filter(a => a.status === 'cerrado').length}`}
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                        />
                       </Box>
-                    </div>
-                  </div>
-                )}
-                {activeTab === 2 && (
-                  <div style={fixedHeightStyles.tabsPanel}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Acciones ({(prospecto.actions || []).length})
-                    </Typography>
+                    </Box>
+                    <Divider />
 
-                    <div style={fixedHeightStyles.listContainer}>
+                    {/* Lista de acciones */}
+                    <Box className={styles.listContainer}>
                       {(prospecto.actions || []).length > 0 ? (
                         (prospecto.actions || []).map((action) => (
-                          <Card key={action.id ?? Math.random()} variant="outlined" sx={{ mb: 1, p: 1 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                              <div>
-                                <Typography variant="subtitle2">
-                                  Fecha: {action.action_date}
-                                </Typography>
-                                <Typography variant="body2" mt={0.5}>
-                                  {action.description}
-                                </Typography>
-                                {action.next_contact && (
-                                  <Typography variant="caption" color="primary" display="block">
-                                    Vencimiento de la acción: {action.next_contact}
-                                  </Typography>
-                                )}
-                              </div>
-                              <Box>
-                                <IconButton size="small" onClick={() => handleOpenEditAction(action)}>
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => action.id !== undefined && deleteAction(action.id)}
-                                >
-                                  {/* <DeleteIcon fontSize="small" /> */}
-                                </IconButton>
+                          <Card
+                            key={action.id ?? Math.random()}
+                            variant="outlined"
+                            sx={{
+                              mb: 1.5,
+                              p: 0,
+                              borderRadius: '6px',
+                              borderLeft: action.status === 'vencido'
+                                ? '4px solid #f44336'
+                                : action.status === 'cerrado'
+                                  ? '4px solid #4caf50'
+                                  : '4px solid #2196f3',
+                              opacity: action.status === 'cerrado' ? 0.7 : 1
+                            }}
+                          >
+                            <Box sx={{ p: 1.5 }}>
+                              <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                                <Box>
+                                  <Box display="flex" alignItems="center" mb={0.5}>
+                                    <Typography variant="subtitle2" sx={{ mr: 1 }}>
+                                      Fecha: {formatDate(action.action_date)}
+                                    </Typography>
+                                    <Chip
+                                      label={action.status}
+                                      size="small"
+                                      color="primary"
+                                      variant="outlined"
+                                    />
+                                  </Box>
+                                  <Typography variant="body2" mt={0.5}>{action.description}</Typography>
+                                  {action.next_contact && (
+                                    <Typography
+                                      variant="caption"
+                                      color={action.status === 'vencido' ? "error" : "primary"}
+                                      display="block"
+                                      sx={{ mt: 0.5 }}
+                                    >
+                                      Vencimiento: {formatDate(action.next_contact)}
+                                    </Typography>
+                                  )}
+                                </Box>
+                                <Box display="flex">
+                                  {action.status !== 'cerrado' && (
+                                    <Button
+                                      size="small"
+                                      variant="outlined"
+                                      color="success"
+                                      startIcon={<CheckCircleIcon />}
+                                      onClick={() => handleCloseAction(action.id as string | number)}
+                                      sx={{ mr: 1 }}
+                                    >
+                                      Cerrar
+                                    </Button>
+                                  )}
+                                  <IconButton size="small" onClick={() => handleOpenEditAction(action)}>
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => action.id !== undefined && deleteAction(action.id)}
+                                  >
+                                    {/* <DeleteIcon fontSize="small" /> */}
+                                  </IconButton>
+                                </Box>
                               </Box>
                             </Box>
                           </Card>
                         ))
                       ) : (
-                        <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', my: 2 }}>
+                        <Typography variant="body2" color="textSecondary" align="center" sx={{ my: 2 }}>
                           No hay acciones registradas
                         </Typography>
                       )}
-                    </div>
+                    </Box>
 
-                    <div style={fixedHeightStyles.addForm}>
+                    {/* Formulario para agregar nueva acción */}
+                    <Box className={styles.addForm}>
                       <Typography variant="subtitle2" gutterBottom>
                         <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
                         Agregar nueva acción
                       </Typography>
-
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <TextField
-                          label="Fecha"
-                          name="action_date"
-                          type="date"
-                          value={newAction.action_date}
-                          onChange={handleActionChange}
-                          size="small"
-                          InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
-                        />
-
-                        <TextField
-                          label="Vencimiento de la acción"
-                          name="next_contact"
-                          type="date"
-                          value={newAction.next_contact}
-                          onChange={handleActionChange}
-                          size="small"
-                          InputLabelProps={{ shrink: true }}
-                          sx={{ width: 'calc(33% - 4px)' }}
-                        />
-
-                        <Box sx={{ width: 'calc(33% - 4px)' }}>
-                          <AsyncSelect
-                            label="Asignado"
-                            placeholder="Seleccione un asignado"
-                            value={newAction.user_id || ''}
-                            onChange={(newValue) =>
-                              setNewAction(prev => ({ ...prev, user_id: newValue }))
-                            }
-                            fetchOptions={getUsers}
-                            className={styles.inputField}
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            label="Fecha"
+                            name="action_date"
+                            type="date"
+                            value={newAction.action_date}
+                            onChange={handleActionChange}
+                            fullWidth
+                            size="small"
+                            required
+                            InputLabelProps={{ shrink: true }}
                           />
-                        </Box>
-                      </Box>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            label="Vencimiento"
+                            name="next_contact"
+                            type="date"
+                            value={newAction.next_contact}
+                            onChange={handleActionChange}
+                            fullWidth
+                            size="small"
+                            required
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        </Grid>
 
-                      <TextField
-                        label="Descripción"
-                        name="description"
-                        value={newAction.description}
-                        onChange={handleActionChange}
-                        fullWidth
-                        multiline
-                        rows={2}
-                        size="small"
-                        sx={{ mt: 1 }}
-                      />
-
-                      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Grid item xs={12} sm={4}>
+                          <FormControl fullWidth size="small" required>
+                            <AsyncSelect
+                              label="Asignado"
+                              placeholder="Seleccione un asignado"
+                              value={newAction.user_id}
+                              onChange={(newValue) =>
+                                setNewAction(prev => ({ ...prev, user_id: newValue }))
+                              }
+                              fetchOptions={getUsers}
+                              required
+                            />
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField
+                            label="Descripción"
+                            name="description"
+                            value={newAction.description}
+                            onChange={handleActionChange}
+                            fullWidth
+                            multiline
+                            rows={2}
+                            size="small"
+                            required
+                          />
+                        </Grid>
+                      </Grid>
+                      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                         <Button
                           variant="contained"
                           color="primary"
                           size="small"
                           startIcon={<AddIcon />}
                           onClick={addAction}
-                          disabled={!newAction.action_date || !newAction.description}
+                          disabled={!newAction.action_date || !newAction.description || !newAction.next_contact || !newAction.user_id}
                         >
                           Agregar
                         </Button>
                       </Box>
-                    </div>
+                    </Box>
                   </div>
                 )}
               </div>
@@ -791,96 +738,60 @@ const ProspectoView = () => {
         </div>
       </div>
 
-      {/* Modal para editar evento */}
-      <Dialog open={editEventDialogOpen} onClose={handleCloseEditEvent}>
-        <DialogTitle>Editar Evento</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Fecha"
-            name="event_date"
-            type="date"
-            value={eventToEdit?.event_date || ''}
-            onChange={handleEditEventChange}
-            fullWidth
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            label="Vencimiento de la acción"
-            name="next_contact"
-            type="date"
-            value={eventToEdit?.next_contact || ''}
-            onChange={handleEditEventChange}
-            fullWidth
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-          />
-
-          <Box sx={{ width: '100%', mt: 2, mb: 1 }}>
-            <AsyncSelect
-              label="Asignado"
-              value={eventToEdit?.user_id || ''}
-              placeholder="Seleccione un asignado"
-              onChange={(newValue) =>
-                setEventToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
-              }
-              fetchOptions={getUsers}
-              className={`${styles.inputField} async-select-container`}
-            />
-          </Box>
-          <TextField
-            label="Descripción"
-            name="description"
-            value={eventToEdit?.description || ''}
-            onChange={handleEditEventChange}
-            fullWidth
-            margin="dense"
-            multiline
-            rows={3}
-          />
-        </DialogContent>
-
-
-        <DialogActions>
-          <Button onClick={handleCloseEditEvent}>Cancelar</Button>
-          <Button onClick={handleSaveEditedEvent} variant="contained" color="primary">
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Modal para editar acción */}
       <Dialog open={editActionDialogOpen} onClose={handleCloseEditAction}>
         <DialogTitle>Editar Acción</DialogTitle>
         <DialogContent>
-          <TextField
-            label="Fecha"
-            name="action_date"
-            type="date"
-            value={actionToEdit?.action_date || ''}
-            onChange={handleEditActionChange}
-            fullWidth
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            label="Vencimiento de la acción"
-            name="next_contact"
-            type="date"
-            value={actionToEdit?.next_contact || ''}
-            onChange={handleEditActionChange}
-            fullWidth
-            margin="dense"
-            InputLabelProps={{ shrink: true }}
-          />
-          <AsyncSelect
-            label="Asignado"
-            value={actionToEdit?.user_id || ''}
-            onChange={(newValue) =>
-              setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
-            }
-            fetchOptions={getUsers}
-          />
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, mt: 1 }}>
+            <TextField
+              label="Fecha"
+              name="action_date"
+              type="date"
+              value={actionToEdit?.action_date || ''}
+              onChange={handleEditActionChange}
+              margin="dense"
+              required
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Vencimiento"
+              name="next_contact"
+              type="date"
+              value={actionToEdit?.next_contact || ''}
+              onChange={handleEditActionChange}
+              margin="dense"
+              required
+              InputLabelProps={{ shrink: true }}
+              sx={{ flex: 1 }}
+            />
+          </Box>
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel id="action-status-label">Estado</InputLabel>
+            <Select
+              labelId="action-status-label"
+              name="status"
+              value={actionToEdit?.status || 'abierto'}
+              onChange={handleEditActionChange}
+              label="Estado"
+            >
+              <MenuItem value="abierto">Abierto</MenuItem>
+              <MenuItem value="vencido">Vencido</MenuItem>
+              <MenuItem value="cerrado">Cerrado</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="dense" required>
+            <AsyncSelect
+              label="Asignado"
+              placeholder="Seleccione un asignado"
+              value={actionToEdit?.user_id || ''}
+              onChange={(newValue) =>
+                setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
+              }
+              fetchOptions={getUsers}
+              required
+            />
+          </FormControl>
           <TextField
             label="Descripción"
             name="description"
@@ -890,11 +801,17 @@ const ProspectoView = () => {
             margin="dense"
             multiline
             rows={3}
+            required
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditAction}>Cancelar</Button>
-          <Button onClick={handleSaveEditedAction} variant="contained" color="primary">
+          <Button
+            onClick={handleSaveEditedAction}
+            variant="contained"
+            color="primary"
+            disabled={!actionToEdit?.action_date || !actionToEdit?.description || !actionToEdit?.next_contact || !actionToEdit?.user_id}
+          >
             Guardar
           </Button>
         </DialogActions>

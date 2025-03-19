@@ -302,14 +302,14 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <Divider />
               <Typography variant="h6" className={styles.sectionTitle} style={{ marginTop: '7px' }}>
                 Información Adicional
               </Typography>
-            </Grid>
+            </Grid> */}
 
-            <Grid item xs={12} md={6}>
+            {/* <Grid item xs={12} md={6}>
               <DatePicker
                 label="Último Contacto"
                 value={stringToDate(formData.ultimoContacto)}
@@ -331,7 +331,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
                   }
                 }}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
 
           <div className={styles.formActions}>

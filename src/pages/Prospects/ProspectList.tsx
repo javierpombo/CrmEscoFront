@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, TextField } from '@mui/material';
+import { Typography, TextField, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 
 // Importaciones de componentes
 import Navbar from '../../components/Navigation/Navbar/Navbar';
@@ -19,6 +22,23 @@ import { Prospecto } from '../../types/Prospecto';
 // Estilos
 import styles from './ProspectList.module.css';
 
+// Función de debounce para optimizar búsquedas
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 const ProspectList: React.FC = () => {
   // Estados de datos y paginación
   const [prospectos, setProspectos] = useState<Prospecto[]>([]);
@@ -30,10 +50,18 @@ const ProspectList: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filteredProspectos, setFilteredProspectos] = useState<Prospecto[]>([]);
-  // Estado para el filtro de estado: 'todos', 'activos' o 'inactivos'
   const [filterStatus, setFilterStatus] = useState<'todos' | 'activos' | 'inactivos'>('todos');
+  // Estado para ordenamiento
+  const [sortConfig, setSortConfig] = useState<{
+    key: string | null;
+    direction: 'ascending' | 'descending' | null;
+  }>({ key: null, direction: null });
+  const [isSearching, setIsSearching] = useState(false);
 
   const navigate = useNavigate();
+
+  // Aplicar debounce al término de búsqueda
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Opciones para el filtro de estado
   const statusFilterOptions: FilterOption[] = [
@@ -47,31 +75,157 @@ const ProspectList: React.FC = () => {
     return user ? user.name : '-';
   };
 
+  // Función para obtener prospectos
+  const fetchProspectos = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await prospectoService.getProspectos(
+        currentPage,
+        filterStatus,
+        sortConfig.key,
+        sortConfig.direction
+      );
+      setProspectos(result.data);
+      setFilteredProspectos(result.data);
+      setTotalPages(result.pagination.lastPage);
+      setTotalItems(result.pagination.total);
+    } catch (err) {
+      console.error('Error al cargar prospectos:', err);
+      setError('Error al cargar los datos. Por favor, intenta de nuevo más tarde.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Cargar prospectos cada vez que cambie la página o el filtro de estado
   useEffect(() => {
-    const fetchProspectos = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await prospectoService.getProspectos(currentPage, filterStatus);
-        // Guarda la data original y la data que se muestra
-        setProspectos(result.data);
-        setFilteredProspectos(result.data);
-        setTotalPages(result.pagination.lastPage);
-        setTotalItems(result.pagination.total);
-        if (result.pagination.currentPage !== currentPage) {
-          setCurrentPage(result.pagination.currentPage);
-        }
-      } catch (err) {
-        console.error('Error al cargar prospectos:', err);
-        setError('Error al cargar los datos. Por favor, intenta de nuevo más tarde.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProspectos();
-  }, [currentPage, filterStatus]);
+    if (!isSearching) {
+      fetchProspectos();
+    }
+  }, [currentPage, filterStatus, sortConfig]);
 
+  // Función para realizar la búsqueda (usando la API)
+  const handleServerSearch = async () => {
+    if (!debouncedSearchTerm) {
+      fetchProspectos();
+      return;
+    }
+
+    setIsLoading(true);
+    setIsSearching(true);
+    setError(null);
+
+    try {
+      // CAMBIO IMPORTANTE: Pasar filterStatus como tercer parámetro
+      const result = await prospectoService.searchProspectos(
+        debouncedSearchTerm,
+        currentPage,
+        filterStatus,
+        sortConfig.key,
+        sortConfig.direction
+      );
+      setProspectos(result.data);
+      setTotalPages(result.pagination.lastPage);
+      setTotalItems(result.pagination.total);
+    } catch (err) {
+      console.error('Error al buscar prospectos:', err);
+      setError('Error al realizar la búsqueda. Por favor, intenta de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Efecto para buscar cuando cambia el término de búsqueda debounced
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      handleServerSearch();
+    } else if (isSearching) {
+      setIsSearching(false);
+      fetchProspectos();
+    }
+  }, [debouncedSearchTerm, sortConfig]);
+
+  // Función para manejar cambios en el input de búsqueda
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  // Función para manejar el evento de Enter en el buscador
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleServerSearch();
+    }
+  };
+
+  // Función para manejar el ordenamiento
+  const requestSort = (key: string) => {
+    let direction: 'ascending' | 'descending' | null = 'ascending';
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'ascending') {
+        direction = 'descending';
+      } else if (sortConfig.direction === 'descending') {
+        direction = null;
+      }
+    }
+    setSortConfig({ key, direction });
+
+    // Cuando cambia el ordenamiento, volver a cargar los datos
+    if (isSearching && debouncedSearchTerm) {
+      handleServerSearch();
+    } else {
+      fetchProspectos();
+    }
+  };
+
+  // Aplicar ordenamiento a los datos
+  const sortedData = React.useMemo(() => {
+    let sortableItems = [...prospectos];
+    if (sortConfig.key && sortConfig.direction) {
+      sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof Prospecto];
+        const bValue = b[sortConfig.key as keyof Prospecto];
+
+        // Para fechas, realizar comparación especial
+        if (sortConfig.key === 'fechaVencimiento' || sortConfig.key === 'ultimoContacto') {
+          const dateA = aValue ? new Date(aValue as string).getTime() : 0;
+          const dateB = bValue ? new Date(bValue as string).getTime() : 0;
+
+          if (sortConfig.direction === 'ascending') {
+            return dateA - dateB;
+          } else {
+            return dateB - dateA;
+          }
+        }
+
+        // Para otros campos
+        if (aValue === bValue) return 0;
+        if (sortConfig.direction === 'ascending') {
+          return aValue < bValue ? -1 : 1;
+        } else {
+          return aValue > bValue ? -1 : 1;
+        }
+      });
+    }
+    return sortableItems;
+  }, [prospectos, sortConfig]);
+
+  // Renderizar ícono de ordenamiento
+  const getSortIcon = (columnName: string) => {
+    if (sortConfig.key !== columnName) {
+      return <SwapVertIcon fontSize="small" />;
+    }
+
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUpwardIcon fontSize="small" />;
+    }
+
+    if (sortConfig.direction === 'descending') {
+      return <ArrowDownwardIcon fontSize="small" />;
+    }
+
+    return <SwapVertIcon fontSize="small" />;
+  };
 
   // Definición de columnas para la tabla
   const prospectColumns = [
@@ -89,7 +243,17 @@ const ProspectList: React.FC = () => {
       render: (row: Prospecto) => renderUserData(row.referentUser)
     },
     { label: 'Último Contacto', field: 'ultimoContacto' },
-    { label: 'Fecha de Vencimiento', field: 'fechaVencimiento' },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Fecha de Vencimiento
+          <IconButton size="small" onClick={() => requestSort('fechaVencimiento')}>
+            {getSortIcon('fechaVencimiento')}
+          </IconButton>
+        </div>
+      ),
+      field: 'fechaVencimiento'
+    },
     {
       label: 'Acción Pendiente',
       field: 'tipoAccion',
@@ -98,65 +262,22 @@ const ProspectList: React.FC = () => {
           return <span className={`${styles.sectorPill} ${styles.colorOrange}`}>Pendiente</span>;
         }
         return <span className={`${styles.sectorPill} ${styles.colorRed}`}>Sin Acción</span>;
-
       }
     }
   ];
 
-  // Función de búsqueda (si quieres mantenerla para búsquedas locales)
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const term = event.target.value.toLowerCase();
-    setSearchTerm(term);
-  
-    if (!term) {
-      // Si no hay término, se restaura la data original
-      setProspectos(filteredProspectos);
-    } else {
-      const filtered = filteredProspectos.filter((p: Prospecto) =>
-        Object.keys(p).some(key => {
-          const val = (p as any)[key];
-          if (val && typeof val === "object") {
-            // Si es un objeto, revisamos si tiene la propiedad "name"
-            return val.name && val.name.toString().toLowerCase().includes(term);
-          }
-          return val && val.toString().toLowerCase().includes(term);
-        })
-      );      
-      setProspectos(filtered);
-    }
-  };
-  
-  
-  
-
   // Función para manejar el cambio de página
   const handlePageChange = (page: number) => {
-    setSearchTerm('');
     setCurrentPage(page);
-  };
-
-  // Función para abrir el modal de creación
-  const handleNewProspectClick = () => {
-    setIsModalOpen(true);
-  };
-
-  // Función para crear prospecto
-  const handleCreateProspect = async (data: Omit<Prospecto, 'id'>) => {
-    try {
-      const newData = { ...data };
-      delete (newData as any).id;
-      const result = await prospectoService.createProspecto(newData);
-      if (result) {
-        const refreshResult = await prospectoService.getProspectos(1, filterStatus);
-        setProspectos(refreshResult.data);
-        setTotalPages(refreshResult.pagination.lastPage);
-        setTotalItems(refreshResult.pagination.total);
-        setCurrentPage(1);
-        setIsModalOpen(false);
-      }
-    } catch (error) {
-      console.error('Error al crear prospecto:', error);
+    if (debouncedSearchTerm) {
+      handleServerSearch();
     }
+  };
+
+  // Función para ver detalle de prospecto
+  const handleViewProspect = (id: string) => {
+    console.log(`Navegando a detalles del prospecto ${id}`);
+    navigate(`detalle/${id}`);
   };
 
   // Función para eliminar prospecto
@@ -178,10 +299,23 @@ const ProspectList: React.FC = () => {
     }
   };
 
-  // Función para ver detalle de prospecto
-  const handleViewProspect = (id: string) => {
-    console.log(`Navegando a detalles del prospecto ${id}`);
-    navigate(`detalle/${id}`);
+  // Función para crear prospecto
+  const handleCreateProspect = async (data: Omit<Prospecto, 'id'>) => {
+    try {
+      const newData = { ...data };
+      delete (newData as any).id;
+      const result = await prospectoService.createProspecto(newData);
+      if (result) {
+        const refreshResult = await prospectoService.getProspectos(1, filterStatus);
+        setProspectos(refreshResult.data);
+        setTotalPages(refreshResult.pagination.lastPage);
+        setTotalItems(refreshResult.pagination.total);
+        setCurrentPage(1);
+        setIsModalOpen(false);
+      }
+    } catch (error) {
+      console.error('Error al crear prospecto:', error);
+    }
   };
 
   // Agregar columna de acciones a cada prospecto
@@ -219,9 +353,8 @@ const ProspectList: React.FC = () => {
                 <ButtonBasemddefault
                   showButtonBasemddefault
                   text="Nuevo"
-                  onClick={handleNewProspectClick}
+                  onClick={() => setIsModalOpen(true)}
                 />
-                {/* Dropdown para filtro de estado */}
                 <FilterDropdown
                   options={statusFilterOptions}
                   onFilterSelect={(selected) => {
@@ -231,17 +364,13 @@ const ProspectList: React.FC = () => {
                   buttonText="Estado"
                   width="150px"
                 />
-                <TextField
+                {/* <TextField
                   className={styles.search}
                   placeholder="Buscar"
                   variant="outlined"
                   value={searchTerm}
                   onChange={handleSearch}
-                  InputProps={{
-                    startAdornment: (
-                      <img width="20px" height="20px" src="/search.svg" alt="Search" />
-                    ),
-                  }}
+                  onKeyPress={handleKeyPress}
                   sx={{
                     '& fieldset': { borderColor: '#e7e7e7' },
                     '& .MuiInputBase-root': {
@@ -255,9 +384,10 @@ const ProspectList: React.FC = () => {
                     },
                     width: '320px',
                   }}
-                />
+                /> */}
               </div>
             </div>
+            {/* PARTE QUE FALTA: Tabla de datos */}
             <div className={styles.tableHeaderTabsParent}>
               <div className={styles.tableHeaderTabs}>
                 <Typography className={styles.contactosActivos} variant="h2" component="h2">
@@ -267,12 +397,13 @@ const ProspectList: React.FC = () => {
                 {isLoading ? (
                   <div className={styles.loadingIndicator}>Cargando...</div>
                 ) : (
-                  <Table data={dataWithActions} columns={columnsWithActions} />
+                  <Table data={dataWithActions} columns={columnsWithActions as any} />
                 )}
               </div>
             </div>
           </div>
         </section>
+        {/* PARTE QUE FALTA: Paginación */}
         <div className={styles.footer}>
           <Pagination
             currentPage={currentPage}
@@ -280,6 +411,7 @@ const ProspectList: React.FC = () => {
             onPageChange={handlePageChange}
           />
         </div>
+        {/* PARTE QUE FALTA: Modal para crear prospecto */}
         <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nuevo Prospecto">
           <ProspectForm onSubmit={handleCreateProspect} onCancel={() => setIsModalOpen(false)} />
         </Modal>

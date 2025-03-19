@@ -1,15 +1,4 @@
 import { User } from './User';
-/**
- * Tipo para eventos relacionados a un prospecto
- */
-export interface EventoType {
-  id?: number | string;
-  prospect_id?: string;
-  event_date: string | null;
-  description: string | null;
-  next_contact: string | null;
-  user_id: string;
-}
 
 /**
  * Tipo para acciones relacionadas a un prospecto
@@ -21,6 +10,7 @@ export interface AccionType {
   description: string | null;
   next_contact: string | null;
   user_id: string;
+  status?: 'abierto' | 'cerrado' | 'vencido'; // Nuevo campo para estado
 }
 
 export interface Prospecto {
@@ -41,12 +31,9 @@ export interface Prospecto {
   activo: string;
   notas: string;
   sector_industria: string;
-  events?: any[];
-  actions?: any[];
+  actions?: AccionType[];
   [key: string]: any;
 }
-
-
 
 /**
  * Tipo para creación de prospectos (sin ID)

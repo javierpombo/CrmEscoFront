@@ -1,7 +1,7 @@
 // src/services/prospectoService.ts
 
 import axios from 'axios';
-import { Prospecto, EventoType, AccionType } from '../types/Prospecto';
+import { Prospecto, AccionType } from '../types/Prospecto';
 import { API_BASE_URL } from '../config/constants'; /* Es la URL de la api */
 
 // Variable para controlar si hay una solicitud de creación en curso
@@ -36,7 +36,7 @@ interface BackendProspect {
   contact_position: string;
   phone_contact?: string;
   email_contact?: string;
-  additional_info?: string; 
+  additional_info?: string;
   referent: string;
   official: string;
   last_contact: string | null;
@@ -50,16 +50,7 @@ interface BackendProspect {
   action_description?: string;
   action_date?: string | null;
   // Relaciones
-  events?: BackendEvent[];
   actions?: BackendAction[];
-}
-
-interface BackendEvent {
-  id: number | string;
-  prospect_id: number | string;
-  event_date: string | null;
-  description: string | null;
-  next_contact: string | null;
 }
 
 interface BackendAction {
@@ -68,6 +59,7 @@ interface BackendAction {
   action_date: string | null;
   description: string | null;
   next_contact: string | null;
+  status?: string; // Nuevo campo para estado
 }
 
 interface PaginatedResponse<T> {
@@ -88,31 +80,25 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
   // Encuentra la última acción (ejemplo de lógica) si existe
   const lastAction = prospect.actions && prospect.actions.length > 0
     ? prospect.actions.sort((a, b) => {
-        if (!a.next_contact) return 1;
-        if (!b.next_contact) return -1;
-        return new Date(b.next_contact).getTime() - new Date(a.next_contact).getTime();
-      })[0]
+      if (!a.action_date) return 1;
+      if (!b.action_date) return -1;
+      return new Date(b.action_date).getTime() - new Date(a.action_date).getTime();
+    })[0]
     : null;
 
-  // Convertir eventos del backend al tipo del frontend
-  const mappedEvents: EventoType[] = (prospect.events || []).map(e => ({
-    id: e.id,
-    prospect_id: e.prospect_id.toString(), 
-    event_date: e.event_date,
-    description: e.description,
-    next_contact: e.next_contact,
-    user_id: (e as any).user_id || ''  
-  }));
-  
   // Convertir acciones del backend al tipo del frontend
   const mappedActions: AccionType[] = (prospect.actions || []).map(a => ({
     id: a.id,
-    prospect_id: a.prospect_id.toString(), 
+    prospect_id: a.prospect_id.toString(),
     action_date: a.action_date,
     description: a.description,
     next_contact: a.next_contact,
-    user_id: (a as any).user_id || ''  
+    user_id: (a as any).user_id || '',
+    status: a.status as 'abierto' | 'cerrado' | 'vencido' || 'abierto' // Valor por defecto 'abierto'
   }));
+
+  // Calcular último contacto basado en la última acción
+  const ultimoContacto = lastAction?.action_date || '';
 
   return {
     id: prospect.id.toString(),
@@ -121,7 +107,7 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     oficial: prospect.official,
     referente: prospect.referent,
     cargo_contacto: prospect.contact_position,
-    ultimoContacto: prospect.last_contact,
+    ultimoContacto: ultimoContacto,
     tipoAccion: lastAction?.description || '',
     fechaVencimiento: lastAction?.next_contact || null,
     numComitente: prospect.client_number || '',
@@ -129,7 +115,6 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     tipoClienteAccion: prospect.client_type_action || '',
     activo: prospect.active || 'activo',
     notas: prospect.notes || '',
-    events: mappedEvents,
     actions: mappedActions,
     telefono_contacto: prospect.phone_contact || '',
     email_contacto: prospect.email_contact || '',
@@ -152,8 +137,8 @@ function mapFrontendProspectToBackendForCreate(
     contact_position: prospecto.cargo_contacto || '',
     phone_contact: prospecto.telefono_contacto || '',
     email_contact: prospecto.email_contacto || '',
-    additional_info: prospecto.info_adicional || '', 
-    sector_industry: prospecto.sector_industry || '', 
+    additional_info: prospecto.info_adicional || '',
+    sector_industry: prospecto.sector_industry || '',
     last_contact: prospecto.ultimoContacto
       ? new Date(prospecto.ultimoContacto).toISOString().split('T')[0]
       : null,
@@ -188,7 +173,7 @@ function mapFrontendProspectToBackendForUpdate(
     phone_contact: prospecto.telefono_contacto || '',
     email_contact: prospecto.email_contacto || '',
     additional_info: prospecto.info_adicional || '',
-    sector_industry: prospecto.sector_industria || '', 
+    sector_industry: prospecto.sector_industria || '',
     last_contact: prospecto.ultimoContacto
       ? new Date(prospecto.ultimoContacto).toISOString().split('T')[0]
       : null,
@@ -206,7 +191,13 @@ function mapFrontendProspectToBackendForUpdate(
 // Servicio principal para Prospectos
 export const prospectoService = {
   // Obtener lista de prospectos con paginación
-  async getProspectos(page = 1): Promise<{
+  async searchProspectos(
+    searchTerm: string,
+    page = 1,
+    filterStatus: string = 'todos',
+    sortField: string | null = null,
+    sortDirection: 'ascending' | 'descending' | null = null
+  ): Promise<{
     data: Prospecto[];
     pagination: {
       currentPage: number;
@@ -215,27 +206,35 @@ export const prospectoService = {
     };
   }> {
     try {
-      const url = `${API_BASE_URL}/prospects/${page}`;
-      console.log(`Realizando petición GET a ${url}`);
-      
+      // Construir URL con parámetros
+      let url = `${API_BASE_URL}/prospects/search?term=${encodeURIComponent(searchTerm)}&page=${page}&status=${filterStatus}`;
+
+      // Agregar parámetros de ordenamiento
+      if (sortField && sortDirection) {
+        const direction = sortDirection === 'ascending' ? 'asc' : 'desc';
+        url += `&sort_by=${sortField}&sort_dir=${direction}`;
+      }
+
+      console.log('URL de búsqueda:', url); // Para depuración
+
       const response = await axios.get<PaginatedResponse<BackendProspect>>(url);
-      console.log('Datos paginados recibidos:', response.data);
-      
+      console.log('Respuesta de búsqueda:', response.data); // Para depuración
+
       const prospectos = response.data.data.map(mapBackendProspectToFrontend);
       const pagination = {
         currentPage: response.data.current_page,
         lastPage: response.data.last_page,
         total: response.data.total
       };
-      
-      return { 
-        data: prospectos, 
+
+      return {
+        data: prospectos,
         pagination
       };
     } catch (error) {
-      console.error('Error al obtener prospectos:', error);
-      return { 
-        data: [], 
+      console.error('Error al buscar prospectos:', error);
+      return {
+        data: [],
         pagination: {
           currentPage: 1,
           lastPage: 1,
@@ -250,10 +249,10 @@ export const prospectoService = {
     try {
       const url = `${API_BASE_URL}/prospects/detail/${id}`;
       console.log(`Realizando petición GET detallada a ${url}`);
-      
+
       const response = await axios.get<BackendProspect>(url);
       console.log('Detalle de prospecto recibido:', response.data);
-      
+
       if (response.data && response.data.id) {
         return mapBackendProspectToFrontend(response.data);
       } else {
@@ -281,25 +280,25 @@ export const prospectoService = {
 
       // 1. Crear una copia limpia de los datos
       const cleanData = { ...data };
-      
+
       // 2. Asegurarse de eliminar cualquier ID que pudiera haberse colado
       delete (cleanData as any).id;
-      
+
       // 3. Usar la función específica para mapeo de creación
       const backendData = mapFrontendProspectToBackendForCreate(cleanData);
-      
+
       // 4. Doble verificación: eliminar cualquier ID que pudiera colarse
       delete backendData.id;
-      
+
       // 5. Loggear para depuración
       console.log('📤 DATOS FINALES ENVIADOS AL CREAR:', backendData);
-      
+
       const url = `${API_BASE_URL}/prospects`;
       console.log(`🔄 Realizando petición POST a ${url}`);
-      
+
       const response = await axios.post(url, backendData);
       console.log('✅ Respuesta al crear prospecto:', response.data);
-      
+
       if (response.data && response.data.prospect) {
         return mapBackendProspectToFrontend(response.data.prospect);
       } else {
@@ -327,13 +326,13 @@ export const prospectoService = {
         console.error('Error: No se proporcionó ID para actualizar prospecto');
         return null;
       }
-      
+
       const url = `${API_BASE_URL}/prospects/${id}`;
       console.log(`Realizando petición post a ${url} con datos:`, backendData);
-      
+
       const response = await axios.post(url, backendData);
       console.log('Respuesta al actualizar prospecto:', response.data);
-      
+
       if (response.data && response.data.prospect) {
         return mapBackendProspectToFrontend(response.data.prospect);
       } else {
@@ -346,26 +345,24 @@ export const prospectoService = {
     }
   },
 
-  // Actualizar un prospecto con eventos y acciones
+  // Actualizar un prospecto con acciones
   async updateProspectoFull(
-    id: string, 
-    data: Partial<Prospecto>, 
-    events: any[] = [], 
+    id: string,
+    data: Partial<Prospecto>,
     actions: any[] = []
   ): Promise<Prospecto | null> {
     try {
       const backendData = {
         ...mapFrontendProspectToBackendForUpdate(data, id),
-        events,
         actions
       };
-      
+
       const url = `${API_BASE_URL}/prospects/updateFull`;
       console.log(`Realizando petición POST a ${url} con datos:`, backendData);
-      
+
       const response = await axios.post(url, backendData);
       console.log('Respuesta al actualizar prospecto completo:', response.data);
-      
+
       if (response.data && response.data.prospect) {
         return mapBackendProspectToFrontend(response.data.prospect);
       } else {
@@ -383,7 +380,7 @@ export const prospectoService = {
     try {
       const url = `${API_BASE_URL}/prospects/${id}`;
       console.log(`Realizando petición DELETE a ${url}`);
-      
+
       await axios.delete(url);
       return true;
     } catch (error) {
@@ -391,29 +388,7 @@ export const prospectoService = {
       return false;
     }
   },
-  async createEvent(prospectId: string, event: EventoType): Promise<EventoType | null> {
-    try {
-      const url = `${API_BASE_URL}/prospects/${prospectId}/events/create`;
-      const response = await axios.post(url, event);
-      console.log('Evento creado:', response.data);
-      return response.data.event;
-    } catch (error) {
-      console.error('Error al crear evento:', error);
-      return null;
-    }
-  },
 
-  async updateEvent(prospectId: string, event: EventoType): Promise<EventoType | null> {
-    try {
-      const url = `${API_BASE_URL}/prospects/${prospectId}/events/update`;
-      const response = await axios.post(url, event);
-      console.log('Evento actualizado:', response.data);
-      return response.data.event;
-    } catch (error) {
-      console.error('Error al actualizar evento:', error);
-      return null;
-    }
-  },
   async createAction(prospectId: string, action: AccionType): Promise<AccionType | null> {
     try {
       const url = `${API_BASE_URL}/prospects/${prospectId}/actions/create`;
@@ -426,13 +401,10 @@ export const prospectoService = {
       return null;
     }
   },
-  
-  async updateAction(prospectId: string, action: AccionType): Promise<AccionType | null> {
+
+  async updateAction(actionId: string, action: AccionType): Promise<AccionType | null> {
     try {
-      const url = `${API_BASE_URL}/prospects/${prospectId}/actions/update`;
-      const response = await axios.post(url, action);
-      console.log('Acción actualizada:', response.data);
-      // Se asume que el backend devuelve el objeto acción en response.data.action
+      const response = await axios.post(`${API_BASE_URL}/prospects/${actionId}/actions/update`, action);
       return response.data.action;
     } catch (error) {
       console.error('Error al actualizar acción:', error);
@@ -447,10 +419,10 @@ export async function getContacts() {
   try {
     const url = `${API_BASE_URL}/clients/active/1`;
     console.log(`Obteniendo contactos desde ${url}`);
-    
+
     const response = await axios.get(url);
     console.log('Contactos recibidos:', response.data);
-    
+
     return response.data.data;
   } catch (error) {
     console.error('Error al obtener contactos:', error);
