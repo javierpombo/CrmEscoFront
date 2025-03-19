@@ -5,8 +5,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     Button,
     Card,
-    Tab,
-    Tabs,
     TextField,
     FormControl,
     InputLabel,
@@ -19,12 +17,32 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    Chip,
+    List,
+    ListItem,
+    ListItemText,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    Divider,
+    Grid,
+    SelectChangeEvent
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import SecurityIcon from '@mui/icons-material/Security';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 import Navbar from '../../components/Navigation/Navbar/Navbar';
 import Header from '../../components/Header/Header';
@@ -32,7 +50,7 @@ import AsyncSelect from '../../components/AsyncSelect/AsyncSelect';
 
 // Servicio y tipos de clientes
 import { clientesService } from '../../services/clientesService';
-import { Client, ClientEvent, ClientAction } from '../../types/Client';
+import { Client, ClientAction, Strategy, Risk, Instrument } from '../../types/Client';
 
 import styles from './ClientView.module.css';
 
@@ -72,23 +90,25 @@ const fixedHeightStyles: Record<string, React.CSSProperties> = {
         padding: '16px'
     },
     summaryCard: {
-        marginBottom: '16px'
+        marginBottom: '24px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
     },
     listContainer: {
-        maxHeight: '300px',
+        maxHeight: '350px',
         overflowY: 'auto',
-        marginBottom: '8px'
+        marginBottom: '16px',
+        padding: '8px'
     },
     addForm: {
-        padding: '10px',
+        padding: '16px',
         backgroundColor: '#f9f9f9',
-        marginTop: '10px',
-        borderRadius: '4px'
+        marginTop: '16px',
+        borderRadius: '8px'
     }
 };
 
 const ClientView: React.FC = () => {
-    // Usamos "numcomitente" (equivalente a "CodComitente") en la URL
     const { numcomitente } = useParams<{ numcomitente: string }>();
     const navigate = useNavigate();
 
@@ -97,30 +117,34 @@ const ClientView: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<number>(0);
     const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
-
-    // Estados para nuevos eventos y acciones; se inicializan con valor vacío para "user_id"
-    const [newEvent, setNewEvent] = useState<ClientEvent>({
-        id: '',
-        client_id: '',
-        event_date: '',
-        description: '',
-        next_contact: '',
-        user_id: ''
+    const [strategy, setStrategy] = useState<Strategy | null>(null);
+    const [isEditingStrategy, setIsEditingStrategy] = useState<boolean>(false);
+    const [strategyForm, setStrategyForm] = useState<{ strategy: string, description: string }>({
+        strategy: '',
+        description: ''
     });
-    const [newAction, setNewAction] = useState<ClientAction>({
+
+    // Estados para acciones
+    const [newAction, setNewAction] = useState<ExtendedClientAction>({
         id: '',
         client_id: '',
         action_date: '',
         description: '',
         next_contact: '',
-        user_id: ''
+        user_id: '',
+        status: 'abierto'
     });
 
+    // Estados para riesgos
+    const [clientRisks, setClientRisks] = useState<Risk[]>([]);
+    const [availableRisks, setAvailableRisks] = useState<Risk[]>([]);
+    const [riskInstruments, setRiskInstruments] = useState<Record<string, Instrument[]>>({});
+    const [riskDialogOpen, setRiskDialogOpen] = useState<boolean>(false);
+
     // Estados para modales de edición
-    const [editEventDialogOpen, setEditEventDialogOpen] = useState<boolean>(false);
-    const [eventToEdit, setEventToEdit] = useState<ClientEvent | null>(null);
     const [editActionDialogOpen, setEditActionDialogOpen] = useState<boolean>(false);
-    const [actionToEdit, setActionToEdit] = useState<ClientAction | null>(null);
+    const [actionToEdit, setActionToEdit] = useState<ExtendedClientAction | null>(null);
+    const [clientNumComitente, setClientNumComitente] = useState<string>('');
 
     // Cargar el detalle del cliente, eventos y acciones
     useEffect(() => {
@@ -135,15 +159,39 @@ const ClientView: React.FC = () => {
             try {
                 const clientData = await clientesService.getClientByCodComitente(numcomitente);
                 if (clientData) {
-                    const [eventsData, actionsData] = await Promise.all([
-                        clientesService.getEventsByCodComitente(numcomitente),
-                        clientesService.getActionsByCodComitente(numcomitente)
+                    setClientNumComitente(numcomitente);
+                    const [actionsData, strategyData, risksData, allRisksData] = await Promise.all([
+                        clientesService.getActionsByCodComitente(numcomitente),
+                        clientesService.getStrategyByClientNumber(numcomitente),
+                        clientesService.getClientRisks(numcomitente),
+                        clientesService.getAllRisks()
                     ]);
+
                     setClient({
                         ...clientData,
-                        events: eventsData,
                         actions: actionsData
                     });
+
+                    if (strategyData) {
+                        setStrategy(strategyData);
+                        setStrategyForm({
+                            strategy: strategyData.strategy,
+                            description: strategyData.description || ''
+                        });
+                    }
+
+                    setClientRisks(risksData || []);
+                    setAvailableRisks(allRisksData || []);
+
+                    if (risksData && risksData.length > 0) {
+                        const instruments: Record<string, Instrument[]> = {};
+                        for (const risk of risksData) {
+                            const riskInstruments = await clientesService.getRiskInstruments(risk.id);
+                            instruments[risk.id] = riskInstruments || [];
+                        }
+                        setRiskInstruments(instruments);
+                    }
+
                     const usersData = await clientesService.getUsers();
                     setUsers(usersData);
                 } else {
@@ -160,89 +208,112 @@ const ClientView: React.FC = () => {
         fetchClientData();
     }, [numcomitente]);
 
-    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-        setActiveTab(newValue);
+    // Funciones para manejar la estrategia
+    const handleStrategyChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setStrategyForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
+
+    const handleEditStrategy = () => {
+        setIsEditingStrategy(true);
+    };
+
+    const handleCancelEditStrategy = () => {
+        if (strategy) {
+            setStrategyForm({
+                strategy: strategy.strategy,
+                description: strategy.description || ''
+            });
+        } else {
+            setStrategyForm({
+                strategy: '',
+                description: ''
+            });
+        }
+        setIsEditingStrategy(false);
+    };
+
+    const handleSaveStrategy = async () => {
+        if (!clientNumComitente) return;
+
+        try {
+            let result;
+            if (strategy?.id) {
+                result = await clientesService.updateStrategy(strategy.id, {
+                    ...strategy,
+                    strategy: strategyForm.strategy,
+                    description: strategyForm.description,
+                    client_number: parseInt(clientNumComitente)
+                });
+            } else {
+                result = await clientesService.createStrategy({
+                    strategy: strategyForm.strategy,
+                    description: strategyForm.description,
+                    client_number: parseInt(clientNumComitente)
+                });
+            }
+
+            if (result) {
+                setStrategy(result);
+                setIsEditingStrategy(false);
+            }
+        } catch (err) {
+            console.error('Error al guardar la estrategia:', err);
+        }
+    };
+    type ActionStatus = 'abierto' | 'vencido' | 'cerrado';
+
+    type ExtendedClientAction = ClientAction & {
+        status: ActionStatus;
+    };
+
 
     const handleGoBack = () => {
         navigate('/crm/clients');
     };
 
-    // Funciones para eventos
-    const handleEventChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setNewEvent(prev => ({ ...prev, [name]: value }));
-    };
-
-    const addEvent = async () => {
-        if (!client || !client.id || !newEvent.event_date || !newEvent.description) return;
-        try {
-            const createdEvent = await clientesService.createEvent(client.id, newEvent);
-            if (createdEvent) {
-                setClient(prev => prev ? { ...prev, events: [...(prev.events ?? []), createdEvent] } : prev);
-                setNewEvent({ id: '', client_id: '', event_date: '', description: '', next_contact: '', user_id: '' });
-            }
-        } catch (err) {
-            console.error('Error al crear evento:', err);
-        }
-    };
-
-    const deleteEvent = async (eventId: string | number) => {
-        if (!client) return;
-        try {
-            await clientesService.deleteEvent(eventId.toString());
-            setClient(prev => prev ? { ...prev, events: (prev.events ?? []).filter(e => e.id !== eventId) } : prev);
-        } catch (err) {
-            console.error('Error al eliminar evento:', err);
-        }
-    };
-
-    const handleOpenEditEvent = (event: ClientEvent) => {
-        setEventToEdit(event);
-        setEditEventDialogOpen(true);
-    };
-
-    const handleCloseEditEvent = () => {
-        setEditEventDialogOpen(false);
-        setEventToEdit(null);
-    };
-
-    const handleEditEventChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!eventToEdit) return;
-        const { name, value } = e.target;
-        setEventToEdit(prev => prev ? { ...prev, [name]: value } : prev);
-    };
-
-    const handleSaveEditedEvent = async () => {
-        if (!client || !client.id || !eventToEdit) return;
-        try {
-            const updatedEvent = await clientesService.updateEvent(client.id, eventToEdit);
-            if (updatedEvent) {
-                setClient(prev => prev ? {
-                    ...prev,
-                    events: (prev.events ?? []).map(e => e.id === updatedEvent.id ? updatedEvent : e)
-                } : prev);
-            }
-        } catch (err) {
-            console.error('Error al actualizar evento:', err);
-        } finally {
-            handleCloseEditEvent();
-        }
-    };
-
     // Funciones para acciones
-    const handleActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleActionChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setNewAction(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleEditActionChange = (
+        e: SelectChangeEvent<any> | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
+        setActionToEdit(prev => (prev ? { ...prev, [name]: value } : prev));
+    };
+
     const addAction = async () => {
-        if (!client || !client.id || !newAction.action_date || !newAction.description) return;
+        if (!client || !clientNumComitente || !newAction.action_date || !newAction.description || !newAction.next_contact || !newAction.user_id) return;
+
+        const actionToCreate: ExtendedClientAction = {
+            ...newAction,
+            client_id: clientNumComitente,
+            status: 'abierto'
+        };
+
         try {
-            const createdAction = await clientesService.createAction(client.id, newAction);
+            const createdAction = await clientesService.createAction(clientNumComitente, actionToCreate);
             if (createdAction) {
-                setClient(prev => prev ? { ...prev, actions: [...(prev.actions ?? []), createdAction] } : prev);
-                setNewAction({ id: '', client_id: '', action_date: '', description: '', next_contact: '', user_id: '' });
+                setClient(prev => prev ? {
+                    ...prev,
+                    actions: [...(prev.actions ?? []), createdAction]
+                } : prev);
+
+                setNewAction({
+                    id: '',
+                    client_id: '',
+                    action_date: '',
+                    description: '',
+                    next_contact: '',
+                    user_id: '',
+                    status: 'abierto'
+                });
             }
         } catch (err) {
             console.error('Error al crear acción:', err);
@@ -259,8 +330,9 @@ const ClientView: React.FC = () => {
         }
     };
 
-    const handleOpenEditAction = (action: ClientAction) => {
-        setActionToEdit(action);
+    const handleOpenEditAction = (action: ExtendedClientAction) => {
+        console.log("Abriendo edición para acción:", action);  // Para depuración
+        setActionToEdit({ ...action });  // Usar una copia para evitar referencias compartidas
         setEditActionDialogOpen(true);
     };
 
@@ -269,27 +341,131 @@ const ClientView: React.FC = () => {
         setActionToEdit(null);
     };
 
-    const handleEditActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!actionToEdit) return;
-        const { name, value } = e.target;
-        setActionToEdit(prev => prev ? { ...prev, [name]: value } : prev);
+    const handleSaveEditedAction = async () => {
+        if (!client || !clientNumComitente || !actionToEdit ||
+            !actionToEdit.action_date || !actionToEdit.description ||
+            !actionToEdit.next_contact || !actionToEdit.user_id) return;
+      
+        try {
+          const updatedAction = await clientesService.updateAction(
+            actionToEdit.id.toString(),
+            actionToEdit 
+          );
+      
+          if (updatedAction) {
+            setClient(prev => prev ? {
+              ...prev,
+              actions: (prev.actions ?? []).map(a =>
+                a.id === updatedAction.id ? updatedAction : a
+              )
+            } : prev);
+          }
+        } catch (err) {
+          console.error('Error al actualizar acción:', err);
+        } finally {
+          handleCloseEditAction();
+        }
+      };
+
+    const handleOpenRiskDialog = () => {
+        setRiskDialogOpen(true);
     };
 
-    const handleSaveEditedAction = async () => {
-        if (!client || !client.id || !actionToEdit) return;
+    const handleCloseRiskDialog = () => {
+        setRiskDialogOpen(false);
+    };
+
+    const handleCloseAction = async (actionId: string | number) => {
+        if (!client) return;
+    
         try {
-            const updatedAction = await clientesService.updateAction(client.id, actionToEdit);
-            if (updatedAction) {
-                setClient(prev => prev ? {
-                    ...prev,
-                    actions: (prev.actions ?? []).map(a => a.id === updatedAction.id ? updatedAction : a)
-                } : prev);
+            const actionToClose = client.actions?.find(a => a.id === actionId) as ExtendedClientAction;
+            if (!actionToClose) return;
+    
+            const updatedAction: ExtendedClientAction = {
+                ...actionToClose,
+                status: 'cerrado'
+            };
+    
+            // Modificado para enviar el ID de la acción como primer parámetro
+            const result = await clientesService.updateAction(
+                actionId.toString(),  // ID de la acción como primer parámetro
+                updatedAction         // La acción a actualizar como segundo parámetro
+            );
+            
+            if (result) {
+                setClient(prev => {
+                    if (!prev) return null;
+                    const updatedActions = (prev.actions || []).map(a =>
+                        a.id === actionId ? { ...a, status: 'cerrado' } : a
+                    );
+                    return { ...prev, actions: updatedActions };
+                });
             }
         } catch (err) {
-            console.error('Error al actualizar acción:', err);
-        } finally {
-            handleCloseEditAction();
+            console.error('Error al cerrar la acción:', err);
         }
+    };
+
+
+    const handleToggleRisk = async (risk: Risk) => {
+        const isAssigned = clientRisks.some(r => r.id === risk.id);
+
+        try {
+            if (isAssigned) {
+                await clientesService.removeRiskFromClient(numcomitente!, risk.id);
+                setClientRisks(prev => prev.filter(r => r.id !== risk.id));
+                setRiskInstruments(prev => {
+                    const newInstruments = { ...prev };
+                    delete newInstruments[risk.id];
+                    return newInstruments;
+                });
+            } else {
+                await clientesService.addRiskToClient(numcomitente!, risk.id);
+                setClientRisks(prev => [...prev, risk]);
+
+                const instruments = await clientesService.getRiskInstruments(risk.id);
+                setRiskInstruments(prev => ({
+                    ...prev,
+                    [risk.id]: instruments || []
+                }));
+            }
+        } catch (err) {
+            console.error('Error al actualizar riesgos:', err);
+        }
+    };
+
+    const renderRiskIcons = (risk: Risk) => {
+        return (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                {risk.fx == 1 && (
+                    <Chip icon={<SwapHorizIcon />} label="FX" size="small" color="primary" variant="outlined" />
+                )}
+                {risk.sobo == 1 && (
+                    <Chip icon={<AccountBalanceIcon />} label="Soberano" size="small" color="secondary" variant="outlined" />
+                )}
+                {risk.credito == 1 && (
+                    <Chip icon={<AttachMoneyIcon />} label="Crédito" size="small" color="info" variant="outlined" />
+                )}
+                {risk.tasa == 1 && (
+                    <Chip icon={<ShowChartIcon />} label="Tasa" size="small" color="success" variant="outlined" />
+                )}
+                {risk.equity == 1 && (
+                    <Chip icon={<TrendingUpIcon />} label="Equity" size="small" color="warning" variant="outlined" />
+                )}
+            </Box>
+        );
+    };
+
+    const formatDate = (dateString: string | null | undefined) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString + 'T00:00:00');  // Añade hora para evitar problemas de zona horaria
+        return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            timeZone: 'UTC'  // Esto puede ayudar a mantener consistencia
+        });
     };
 
     const handleSaveChanges = async () => {
@@ -298,7 +474,6 @@ const ClientView: React.FC = () => {
             const updatedClient = await clientesService.updateClientFull(
                 client.id,
                 client,
-                client.events ?? [],
                 client.actions ?? []
             );
             if (updatedClient) {
@@ -309,48 +484,218 @@ const ClientView: React.FC = () => {
         }
     };
 
-    // Variables locales para evitar errores de undefined
-    const events = client?.events ?? [];
     const actions = client?.actions ?? [];
 
-    // Función para renderizar todos los datos del cliente (excepto events y actions)
     const renderClientData = () => {
         if (!client) return null;
-        const excludedKeys = ['events', 'actions', 'id', 'numcomitente'];
+        const excludedKeys = ['actions', 'id', 'numcomitente'];
         return (
-            <Paper elevation={0} className={styles.summaryCard}>
-                <Box display="flex" flexDirection="column" gap={1} p={1}>
-                    {Object.entries(client).map(([key, value]) => {
-                        if (excludedKeys.includes(key)) return null;
-                        let displayKey = key;
-                        let displayValue;
-                        if (typeof value === 'boolean') {
-                            displayKey = 'estado';
-                            displayValue = value ? 'activo' : 'inactivo';
-                        } else {
-                            displayValue = value !== null && value !== undefined ? value.toString() : '—';
-                        }
-                        return (
-                            <Box key={key} display="flex" alignItems="center">
-                                <Typography variant="caption" color="textSecondary" sx={{ minWidth: '150px' }}>
-                                    {displayKey}:
-                                </Typography>
-                                <Typography variant="body2">
-                                    {displayValue}
-                                </Typography>
+            <Paper elevation={0} className={styles.summaryCard} sx={{ p: 2 }}>
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+                            Información del Cliente
+                        </Typography>
+                        <Divider sx={{ mb: 2 }} />
+                        <Grid container spacing={1}>
+                            {Object.entries(client).map(([key, value]) => {
+                                if (excludedKeys.includes(key)) return null;
+                                let displayKey = key.charAt(0).toUpperCase() + key.slice(1);
+                                let displayValue;
+                                if (typeof value === 'boolean') {
+                                    displayKey = 'Estado';
+                                    displayValue = value ? 'Activo' : 'Inactivo';
+                                } else {
+                                    displayValue = value !== null && value !== undefined ? value.toString() : '—';
+                                }
+                                return (
+                                    <Grid item xs={12} key={key}>
+                                        <Box display="flex" alignItems="center" py={0.5}>
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: '150px', fontWeight: 500 }}>
+                                                {displayKey}:
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {displayValue}
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+                                );
+                            })}
+                        </Grid>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+                                Estrategia
+                            </Typography>
+                            {!isEditingStrategy ? (
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={strategy ? <EditIcon /> : <AddIcon />}
+                                    onClick={handleEditStrategy}
+                                >
+                                    {strategy ? 'Editar' : 'Agregar'}
+                                </Button>
+                            ) : (
+                                <Box display="flex" gap={1}>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        color="inherit"
+                                        onClick={handleCancelEditStrategy}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={handleSaveStrategy}
+                                        disabled={!strategyForm.strategy}
+                                    >
+                                        Guardar
+                                    </Button>
+                                </Box>
+                            )}
+                        </Box>
+                        <Divider sx={{ mb: 2 }} />
+                        {isEditingStrategy ? (
+                            <Box>
+                                <TextField
+                                    label="Estrategia"
+                                    name="strategy"
+                                    value={strategyForm.strategy}
+                                    onChange={handleStrategyChange}
+                                    fullWidth
+                                    size="small"
+                                    required
+                                    margin="dense"
+                                />
+                                <TextField
+                                    label="Descripción"
+                                    name="description"
+                                    value={strategyForm.description}
+                                    onChange={handleStrategyChange}
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    size="small"
+                                    margin="dense"
+                                />
                             </Box>
-                        );
-                    })}
+                        ) : (
+                            strategy ? (
+                                <Box>
+                                    <Box display="flex" alignItems="center" mb={1}>
+                                        <Typography variant="body2" color="textSecondary" sx={{ minWidth: '150px', fontWeight: 500 }}>
+                                            Estrategia:
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            {strategy.strategy}
+                                        </Typography>
+                                    </Box>
+                                    {strategy.description && (
+                                        <Box display="flex" alignItems="flex-start">
+                                            <Typography variant="body2" color="textSecondary" sx={{ minWidth: '150px', fontWeight: 500 }}>
+                                                Descripción:
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {strategy.description}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Box>
+                            ) : (
+                                <Typography variant="body2" color="text.secondary" align="center" py={1}>
+                                    No hay estrategia definida para este cliente
+                                </Typography>
+                            )
+                        )}
+                    </Grid>
+                </Grid>
+
+                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Typography variant="subtitle1" fontWeight="medium">
+                            Perfil de Riesgo
+                        </Typography>
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<EditIcon />}
+                            onClick={handleOpenRiskDialog}
+                        >
+                            Gestionar Riesgos
+                        </Button>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {clientRisks.length > 0 ? (
+                        <Grid container spacing={2}>
+                            {clientRisks.map((risk) => (
+                                <Grid item xs={12} md={6} lg={4} key={risk.id}>
+                                    <Accordion variant="outlined" sx={{ mb: 1, boxShadow: 'none' }}>
+                                        <AccordionSummary
+                                            expandIcon={<ExpandMoreIcon />}
+                                            sx={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
+                                        >
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    {risk.description}
+                                                </Typography>
+                                                {renderRiskIcons(risk)}
+                                            </Box>
+                                        </AccordionSummary>
+                                        <AccordionDetails sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.01)' }}>
+                                            <Typography variant="caption" color="textSecondary" gutterBottom>
+                                                Instrumentos asociados:
+                                            </Typography>
+                                            {riskInstruments[risk.id]?.length > 0 ? (
+                                                <List dense disablePadding>
+                                                    {riskInstruments[risk.id].map((instrument) => (
+                                                        <ListItem
+                                                            key={instrument.id_instruments}
+                                                            sx={{ p: 0.5, pl: 1 }}
+                                                            secondaryAction={
+                                                                <Chip
+                                                                    label={instrument.abbreviation}
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    sx={{ fontSize: '0.7rem' }}
+                                                                />
+                                                            }
+                                                        >
+                                                            <ListItemText
+                                                                primary={instrument.description}
+                                                                primaryTypographyProps={{ variant: 'body2' }}
+                                                            />
+                                                        </ListItem>
+                                                    ))}
+                                                </List>
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 1 }}>
+                                                    No hay instrumentos asociados
+                                                </Typography>
+                                            )}
+                                        </AccordionDetails>
+                                    </Accordion>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    ) : (
+                        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 1 }}>
+                            No hay riesgos asignados a este cliente
+                        </Typography>
+                    )}
                 </Box>
             </Paper>
         );
     };
-    
-    
 
     return (
         <div style={fixedHeightStyles.pageContainer}>
-            {/* <Navbar /> */}
             <div style={fixedHeightStyles.headerContainer}>
                 <Header />
             </div>
@@ -368,358 +713,350 @@ const ClientView: React.FC = () => {
                             Volver
                         </Button>
                         <div className={styles.countContainer}>
-                            <Typography variant="body2">Eventos: {events.length}</Typography>
                             <Typography variant="body2">Acciones: {actions.length}</Typography>
                         </div>
                     </Box>
                     <Typography variant="h5" gutterBottom>
                         {client?.nombre || 'Detalle de Cliente'}
                     </Typography>
+
                     {/* Mostrar todos los datos del cliente */}
                     {renderClientData()}
 
+                    {/* Sección de Acciones */}
                     {client && (
-                        <Card className={styles.formCard}>
-                            <Tabs value={activeTab} onChange={handleTabChange} variant="fullWidth" className={styles.tabs}>
-                                <Tab label="Eventos" />
-                                <Tab label="Acciones" />
-                            </Tabs>
-                            <div className={styles.tabContent}>
-                                {activeTab === 0 && (
-                                    <Box sx={{ p: 2 }}>
-                                        <Typography variant="subtitle1" gutterBottom>
-                                            Eventos ({events.length})
-                                        </Typography>
-                                        <Box className={styles.listContainer}>
-                                            {events.length > 0 ? (
-                                                events.map(event => (
-                                                    <Card key={event.id} variant="outlined" sx={{ mb: 1, p: 1 }}>
-                                                        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                                                            <Box>
-                                                                <Typography variant="subtitle2">Fecha: {event.event_date}</Typography>
-                                                                <Typography variant="body2" mt={0.5}>{event.description}</Typography>
-                                                                {event.next_contact && (
-                                                                    <Typography variant="caption" color="primary" display="block">
-                                                                        Próximo evento: {event.next_contact}
-                                                                    </Typography>
-                                                                )}
-                                                            </Box>
-                                                            <Box>
-                                                                <IconButton size="small" onClick={() => handleOpenEditEvent(event)}>
-                                                                    <EditIcon fontSize="small" />
-                                                                </IconButton>
-                                                                <IconButton size="small" color="error" onClick={() => deleteEvent(event.id)}>
-                                                                    {/* <DeleteIcon fontSize="small" /> */}
-                                                                </IconButton>
-                                                            </Box>
-                                                        </Box>
-                                                    </Card>
-                                                ))
-                                            ) : (
-                                                <Typography variant="body2" color="textSecondary" align="center" sx={{ my: 2 }}>
-                                                    No hay eventos registrados
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                        <Box className={styles.addForm}>
-                                            <Typography variant="subtitle2" gutterBottom>
-                                                <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                                                Agregar nuevo evento
-                                            </Typography>
-                                            <Box
+                        <Card sx={{ borderRadius: '8px', overflow: 'hidden' }}>
+                            <Box sx={{
+                                p: 2,
+                                backgroundColor: '#f5f5f5',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <Typography variant="subtitle1" fontWeight="medium">
+                                    Acciones ({actions.length})
+                                </Typography>
+                                <Box>
+                                    <Chip
+                                        icon={<AccessTimeIcon fontSize="small" />}
+                                        label={`Abiertos: ${actions.filter(a => a.status === 'abierto').length}`}
+                                        size="small"
+                                        color="primary"
+                                        variant="outlined"
+                                        sx={{ mr: 1 }}
+                                    />
+                                    <Chip
+                                        icon={<ErrorIcon fontSize="small" />}
+                                        label={`Vencidos: ${actions.filter(a => a.status === 'vencido').length}`}
+                                        size="small"
+                                        color="error"
+                                        variant="outlined"
+                                        sx={{ mr: 1 }}
+                                    />
+                                    <Chip
+                                        icon={<CheckCircleIcon fontSize="small" />}
+                                        label={`Cerrados: ${actions.filter(a => a.status === 'cerrado').length}`}
+                                        size="small"
+                                        color="success"
+                                        variant="outlined"
+                                    />
+                                </Box>
+                            </Box>
+                            <Divider />
+                            <Box className={styles.listContainer}>
+                                {actions.length > 0 ? (
+                                    actions.map(action => {
+                                        return (
+                                            <Card
+                                                key={action.id}
+                                                variant="outlined"
                                                 sx={{
-                                                    display: 'flex',
-                                                    gap: 2,           // Espacio horizontal entre elementos
-                                                    alignItems: 'center', // Alinea verticalmente al centro
-                                                    flexWrap: 'wrap'  // Permite que se acomoden en varias líneas si no cabe en una sola
+                                                    mb: 1.5,
+                                                    p: 0,
+                                                    borderRadius: '6px',
+                                                    borderLeft: action.status === 'vencido'
+                                                        ? '4px solid #f44336'
+                                                        : action.status === 'cerrado'
+                                                            ? '4px solid #4caf50'
+                                                            : '4px solid #2196f3',
+                                                    opacity: action.status === 'cerrado' ? 0.7 : 1
                                                 }}
                                             >
-                                                <TextField
-                                                    label="Fecha"
-                                                    name="event_date"
-                                                    type="date"
-                                                    value={newEvent.event_date}
-                                                    onChange={handleEventChange}
-                                                    size="small"
-                                                    InputLabelProps={{ shrink: true }}
-                                                    sx={{ flex: 1 }} // Ocupa espacio de manera proporcional
-                                                />
-
-                                                <TextField
-                                                    label="Próximo evento"
-                                                    name="next_contact"
-                                                    type="date"
-                                                    value={newEvent.next_contact}
-                                                    onChange={handleEventChange}
-                                                    size="small"
-                                                    InputLabelProps={{ shrink: true }}
-                                                    sx={{ flex: 1 }}
-                                                />
-
-                                                <FormControl sx={{ flex: 1 }} size="small">
-                                                    <AsyncSelect
-                                                        label="Asignado"
-                                                        placeholder="Seleccione un asignado"
-                                                        value={newEvent.user_id}
-                                                        onChange={(newValue) =>
-                                                            setNewEvent(prev => ({ ...prev, user_id: newValue }))
-                                                        }
-                                                        fetchOptions={clientesService.getUsers}
-                                                    />
-                                                </FormControl>
-                                            </Box>
-
-                                            <TextField
-                                                label="Descripción"
-                                                name="description"
-                                                value={newEvent.description}
-                                                onChange={handleEventChange}
-                                                fullWidth
-                                                multiline
-                                                rows={2}
-                                                size="small"
-                                                sx={{ mt: 1 }}
-                                            />
-                                            <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                                                <Button
-                                                    variant="contained"
-                                                    color="primary"
-                                                    size="small"
-                                                    startIcon={<AddIcon />}
-                                                    onClick={addEvent}
-                                                    disabled={!newEvent.event_date || !newEvent.description}
-                                                >
-                                                    Agregar
-                                                </Button>
-                                            </Box>
-                                        </Box>
-                                    </Box>
-                                )}
-                                {activeTab === 1 && (
-                                    <Box sx={{ p: 2 }}>
-                                        <Typography variant="subtitle1" gutterBottom>
-                                            Acciones ({actions.length})
-                                        </Typography>
-                                        <Box className={styles.listContainer}>
-                                            {actions.length > 0 ? (
-                                                actions.map(action => (
-                                                    <Card key={action.id} variant="outlined" sx={{ mb: 1, p: 1 }}>
-                                                        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                                                            <Box>
-                                                                <Typography variant="subtitle2">Fecha: {action.action_date}</Typography>
-                                                                <Typography variant="body2" mt={0.5}>{action.description}</Typography>
-                                                                {action.next_contact && (
-                                                                    <Typography variant="caption" color="primary" display="block">
-                                                                        Vencimiento de la acción: {action.next_contact}
-                                                                    </Typography>
-                                                                )}
+                                                <Box sx={{ p: 1.5 }}>
+                                                    <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                                                        <Box>
+                                                            <Box display="flex" alignItems="center" mb={0.5}>
+                                                                <Typography variant="subtitle2" sx={{ mr: 1 }}>
+                                                                    Fecha: {formatDate(action.action_date)}
+                                                                </Typography>
+                                                                <Chip
+                                                                    label={action.status}
+                                                                    size="small"
+                                                                    color="primary"
+                                                                    variant="outlined"
+                                                                />
                                                             </Box>
-                                                            <Box>
-                                                                <IconButton size="small" onClick={() => handleOpenEditAction(action)}>
-                                                                    <EditIcon fontSize="small" />
-                                                                </IconButton>
-                                                                <IconButton size="small" color="error" onClick={() => deleteAction(action.id)}>
-                                                                    {/* <DeleteIcon fontSize="small" /> */}
-                                                                </IconButton>
-                                                            </Box>
+                                                            <Typography variant="body2" mt={0.5}>{action.description}</Typography>
+                                                            {action.next_contact && (
+                                                                <Typography
+                                                                    variant="caption"
+                                                                    color={action.status === 'vencido' ? "error" : "primary"}
+                                                                    display="block"
+                                                                    sx={{ mt: 0.5 }}
+                                                                >
+                                                                    Vencimiento: {formatDate(action.next_contact)}
+                                                                </Typography>
+                                                            )}
                                                         </Box>
-                                                    </Card>
-                                                ))
-                                            ) : (
-                                                <Typography variant="body2" color="textSecondary" align="center" sx={{ my: 2 }}>
-                                                    No hay acciones registradas
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                        <Box className={styles.addForm}>
-                                            <Typography variant="subtitle2" gutterBottom>
-                                                <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                                                Agregar nueva acción
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                                <TextField
-                                                    label="Fecha"
-                                                    name="action_date"
-                                                    type="date"
-                                                    value={newAction.action_date}
-                                                    onChange={handleActionChange}
-                                                    size="small"
-                                                    InputLabelProps={{ shrink: true }}
-                                                    sx={{ width: '33%' }}
-                                                />
-                                                <TextField
-                                                    label="Vencimiento"
-                                                    name="next_contact"
-                                                    type="date"
-                                                    value={newAction.next_contact}
-                                                    onChange={handleActionChange}
-                                                    size="small"
-                                                    InputLabelProps={{ shrink: true }}
-                                                    sx={{ width: '33%' }}
-                                                />
-                                                <FormControl
-                                                    fullWidth
-                                                    size="small"
-                                                    sx={{ width: '33%' }}
-                                                >
-                                                    <AsyncSelect
-                                                        label="Asignado"
-                                                        placeholder="Seleccione un asignado"
-                                                        value={newEvent.user_id}
-                                                        onChange={(newValue) =>
-                                                            setNewEvent(prev => ({ ...prev, user_id: newValue }))
-                                                        }
-                                                        fetchOptions={clientesService.getUsers}
-                                                    />
-                                                </FormControl>
-
-                                            </Box>
-                                            <TextField
-                                                label="Descripción"
-                                                name="description"
-                                                value={newAction.description}
-                                                onChange={handleActionChange}
-                                                fullWidth
-                                                multiline
-                                                rows={2}
-                                                size="small"
-                                                sx={{ mt: 1 }}
-                                            />
-                                            <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                                                <Button
-                                                    variant="contained"
-                                                    color="primary"
-                                                    size="small"
-                                                    startIcon={<AddIcon />}
-                                                    onClick={addAction}
-                                                    disabled={!newAction.action_date || !newAction.description}
-                                                >
-                                                    Agregar
-                                                </Button>
-                                            </Box>
-                                        </Box>
-                                    </Box>
+                                                        <Box display="flex">
+                                                            {action.status !== 'cerrado' && (
+                                                                <Button
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    color="success"
+                                                                    startIcon={<CheckCircleIcon />}
+                                                                    onClick={() => handleCloseAction(action.id)}
+                                                                    sx={{ mr: 1 }}
+                                                                >
+                                                                    Cerrar
+                                                                </Button>
+                                                            )}
+                                                            <IconButton size="small" onClick={() => handleOpenEditAction(action as ExtendedClientAction)}>
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                            {/* <IconButton size="small" color="error" onClick={() => deleteAction(String(action.id))}>
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton> */}
+                                                        </Box>
+                                                    </Box>
+                                                </Box>
+                                            </Card>
+                                        );
+                                    })
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary" align="center" sx={{ my: 2 }}>
+                                        No hay acciones registradas
+                                    </Typography>
                                 )}
-                            </div>
+                            </Box>
+                            <Box className={styles.addForm}>
+                                <Typography variant="subtitle2" gutterBottom>
+                                    <AddIcon fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                                    Agregar nueva acción
+                                </Typography>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={4}>
+                                        <TextField
+                                            label="Fecha"
+                                            name="action_date"
+                                            type="date"
+                                            value={newAction.action_date}
+                                            onChange={handleActionChange}
+                                            fullWidth
+                                            size="small"
+                                            required
+                                            InputLabelProps={{ shrink: true }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={4}>
+                                        <TextField
+                                            label="Vencimiento"
+                                            name="next_contact"
+                                            type="date"
+                                            value={newAction.next_contact}
+                                            onChange={handleActionChange}
+                                            fullWidth
+                                            size="small"
+                                            required
+                                            InputLabelProps={{ shrink: true }}
+                                        />
+                                    </Grid>
+
+                                    <Grid item xs={12} sm={4}>
+                                        <FormControl fullWidth size="small" required>
+                                            <AsyncSelect
+                                                label="Asignado"
+                                                placeholder="Seleccione un asignado"
+                                                value={newAction.user_id}
+                                                onChange={(newValue) =>
+                                                    setNewAction(prev => ({ ...prev, user_id: newValue }))
+                                                }
+                                                fetchOptions={clientesService.getUsers}
+                                                required
+                                            />
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="Descripción"
+                                            name="description"
+                                            value={newAction.description}
+                                            onChange={handleActionChange}
+                                            fullWidth
+                                            multiline
+                                            rows={2}
+                                            size="small"
+                                            required
+                                        />
+                                    </Grid>
+                                </Grid>
+                                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        startIcon={<AddIcon />}
+                                        onClick={addAction}
+                                        disabled={!newAction.action_date || !newAction.description || !newAction.next_contact || !newAction.user_id}
+                                    >
+                                        Agregar
+                                    </Button>
+                                </Box>
+                            </Box>
                         </Card>
                     )}
                 </div>
             </div>
 
-            {/* Modal para editar evento */}
-            <Dialog open={editEventDialogOpen} onClose={handleCloseEditEvent}>
-                <DialogTitle>Editar Evento</DialogTitle>
+            {/* Modal para editar acción */}
+            <Dialog open={editActionDialogOpen} onClose={handleCloseEditAction}>
+                <DialogTitle>Editar Acción</DialogTitle>
                 <DialogContent>
-                    <TextField
-                        label="Fecha"
-                        name="event_date"
-                        type="date"
-                        value={eventToEdit?.event_date || ''}
-                        onChange={handleEditEventChange}
-                        fullWidth
-                        margin="dense"
-                        InputLabelProps={{ shrink: true }}
-                    />
-                    <TextField
-                        label="Vencimiento"
-                        name="next_contact"
-                        type="date"
-                        value={eventToEdit?.next_contact || ''}
-                        onChange={handleEditEventChange}
-                        fullWidth
-                        margin="dense"
-                        InputLabelProps={{ shrink: true }}
-                    />
-                    <FormControl
-                        fullWidth
-                        size="small"
-                        sx={{ width: '33%' }}
-                    >
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, mt: 1 }}>
+                        <TextField
+                            label="Fecha"
+                            name="action_date"
+                            type="date"
+                            value={actionToEdit?.action_date || ''}
+                            onChange={handleEditActionChange}
+                            margin="dense"
+                            required
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ flex: 1 }}
+                        />
+                        <TextField
+                            label="Vencimiento"
+                            name="next_contact"
+                            type="date"
+                            value={actionToEdit?.next_contact || ''}
+                            onChange={handleEditActionChange}
+                            margin="dense"
+                            required
+                            InputLabelProps={{ shrink: true }}
+                            sx={{ flex: 1 }}
+                        />
+                    </Box>
+                    <FormControl fullWidth margin="dense" required>
+                        <InputLabel id="action-status-label">Estado</InputLabel>
+                        <Select
+                            labelId="action-status-label"
+                            name="status"
+                            value={actionToEdit?.status || 'abierto'}
+                            onChange={handleEditActionChange}
+                            label="Estado"
+                        >
+                            <MenuItem value="abierto">Abierto</MenuItem>
+                            <MenuItem value="vencido">Vencido</MenuItem>
+                            <MenuItem value="cerrado">Cerrado</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth margin="dense" required>
                         <AsyncSelect
                             label="Asignado"
                             placeholder="Seleccione un asignado"
-                            value={newEvent.user_id}
+                            value={actionToEdit?.user_id || ''}
                             onChange={(newValue) =>
-                                setNewEvent(prev => ({ ...prev, user_id: newValue }))
+                                setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
                             }
                             fetchOptions={clientesService.getUsers}
+                            required
                         />
                     </FormControl>
-
                     <TextField
                         label="Descripción"
                         name="description"
-                        value={eventToEdit?.description || ''}
-                        onChange={handleEditEventChange}
+                        value={actionToEdit?.description || ''}
+                        onChange={handleEditActionChange}
                         fullWidth
                         margin="dense"
                         multiline
                         rows={3}
+                        required
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseEditEvent}>Cancelar</Button>
-                    <Button onClick={handleSaveEditedEvent} variant="contained" color="primary">
+                    <Button onClick={handleCloseEditAction}>Cancelar</Button>
+                    <Button
+                        onClick={handleSaveEditedAction}
+                        variant="contained"
+                        color="primary"
+                        disabled={!actionToEdit?.action_date || !actionToEdit?.description || !actionToEdit?.next_contact || !actionToEdit?.user_id}
+                    >
                         Guardar
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Modal para editar acción */}
-            <Dialog open={editActionDialogOpen} onClose={handleCloseEditAction}>
-  <DialogTitle>Editar Acción</DialogTitle>
-  <DialogContent>
-    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-      <TextField
-        label="Fecha"
-        name="action_date"
-        type="date"
-        value={actionToEdit?.action_date || ''}
-        onChange={handleEditActionChange}
-        margin="dense"
-        InputLabelProps={{ shrink: true }}
-        sx={{ flex: 1 }}
-      />
-      <TextField
-        label="Vencimiento"
-        name="next_contact"
-        type="date"
-        value={actionToEdit?.next_contact || ''}
-        onChange={handleEditActionChange}
-        margin="dense"
-        InputLabelProps={{ shrink: true }}
-        sx={{ flex: 1 }}
-      />
-      <FormControl fullWidth size="small" sx={{ flex: 1 }}>
-        <AsyncSelect
-          label="Asignado"
-          placeholder="Seleccione un asignado"
-          value={actionToEdit?.user_id || ''}
-          onChange={(newValue) =>
-            setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
-          }
-          fetchOptions={clientesService.getUsers}
-        />
-      </FormControl>
-    </Box>
-    <TextField
-      label="Descripción"
-      name="description"
-      value={actionToEdit?.description || ''}
-      onChange={handleEditActionChange}
-      fullWidth
-      margin="dense"
-      multiline
-      rows={3}
-    />
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={handleCloseEditAction}>Cancelar</Button>
-    <Button onClick={handleSaveEditedAction} variant="contained" color="primary">
-      Guardar
-    </Button>
-  </DialogActions>
-</Dialog>
+            {/* Modal para gestionar riesgos */}
+            <Dialog open={riskDialogOpen} onClose={handleCloseRiskDialog} maxWidth="md" fullWidth>
+                <DialogTitle>Gestionar Riesgos del Cliente</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="textSecondary" paragraph>
+                        Seleccione los riesgos aplicables al cliente. Cada riesgo puede tener diferentes categorías (FX, Soberano, Crédito, etc.) e instrumentos asociados.
+                    </Typography>
+
+                    <List>
+                        {availableRisks.map(risk => {
+                            const isAssigned = clientRisks.some(r => r.id === risk.id);
+                            return (
+                                <ListItem
+                                    key={risk.id}
+                                    secondaryAction={
+                                        <Button
+                                            variant={isAssigned ? "contained" : "outlined"}
+                                            color={isAssigned ? "primary" : "inherit"}
+                                            onClick={() => handleToggleRisk(risk)}
+                                            size="small"
+                                        >
+                                            {isAssigned ? "Quitar" : "Asignar"}
+                                        </Button>
+                                    }
+                                    sx={{
+                                        borderBottom: '1px solid #e0e0e0',
+                                        bgcolor: isAssigned ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                                        borderRadius: '4px',
+                                        mb: 1
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                        <ListItemText
+                                            primary={
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <SecurityIcon sx={{ mr: 1, color: 'primary.main' }} fontSize="small" />
+                                                    <Typography variant="subtitle2">{risk.description}</Typography>
+                                                </Box>
+                                            }
+                                            secondary={renderRiskIcons(risk)}
+                                        />
+                                        {isAssigned && riskInstruments[risk.id]?.length > 0 && (
+                                            <Box sx={{ mt: 1, ml: 4 }}>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Instrumentos: {riskInstruments[risk.id].map(i => i.abbreviation).join(', ')}
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                </ListItem>
+                            );
+                        })}
+                    </List>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseRiskDialog} variant="contained">
+                        Cerrar
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 };

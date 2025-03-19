@@ -45,7 +45,7 @@ const emptyProspectData: Omit<Prospecto, 'id'> = {
   contacto: '',
   oficial: '',
   referente: '',
-  tipoCliente: '',
+  cargo_contacto: '',
   ultimoContacto: null,
   tipoAccion: '',
   fechaVencimiento: null,
@@ -53,7 +53,10 @@ const emptyProspectData: Omit<Prospecto, 'id'> = {
   yaEsCliente: false,
   tipoClienteAccion: '',
   activo: '',
-  notas: ''
+  telefono_contacto: '',
+  email_contacto: '',
+  info_adicional: '',
+  sector_industria :'',
 };
 
 export const ProspectForm: React.FC<ProspectFormProps> = ({
@@ -154,7 +157,6 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               <Typography variant="h6" className={styles.sectionTitle}>
                 Información Principal
               </Typography>
-              <Divider />
             </Grid>
 
             <Grid item xs={12} md={6}>
@@ -175,6 +177,51 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
             </Grid>
 
             <Grid item xs={12} md={6}>
+              <AsyncSelect
+                label="Referente"
+                value={formData.referente || ''}
+                onChange={(newValue) => handleChange('referente', newValue)}
+                required
+                fetchOptions={getUsers}
+                disabled={isSubmitting || formSubmitted}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <AsyncSelect
+                label="Oficial"
+                value={formData.oficial || ''}
+                onChange={(newValue) => handleChange('oficial', newValue)}
+                required
+                fetchOptions={getUsers}
+                disabled={isSubmitting || formSubmitted}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Sector/Industria"
+                placeholder="Sector/Industria"
+                fullWidth
+                value={formData.sector_industria || ''}
+                onChange={(e) => handleChange('sector_industria', e.target.value)}
+                required
+                variant="outlined"
+                size="small"
+                disabled={isSubmitting || formSubmitted}
+                InputProps={{
+                  className: styles.inputField
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider />
+              <Typography variant="h6" className={styles.sectionTitle} style={{ marginTop: '7px' }}>
+                Información de contacto del cliente
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
               <TextField
                 label="Contacto en el cliente"
                 placeholder="Contacto en el cliente"
@@ -192,34 +239,29 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <AsyncSelect
-                label="Oficial"
-                value={formData.oficial || ''}
-                onChange={(newValue) => handleChange('oficial', newValue)}
+              <TextField
+                label="Cargo del Contacto"
+                placeholder="Cargo del contacto"
+                fullWidth
+                value={formData.cargo_contacto || ''}
+                onChange={(e) => handleChange('cargo_contacto', e.target.value)}
                 required
-                fetchOptions={getUsers}
+                variant="outlined"
+                size="small"
                 disabled={isSubmitting || formSubmitted}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <AsyncSelect
-                label="Referente"
-                value={formData.referente || ''}
-                onChange={(newValue) => handleChange('referente', newValue)}
-                required
-                fetchOptions={getUsers}
-                disabled={isSubmitting || formSubmitted}
+                InputProps={{
+                  className: styles.inputField
+                }}
               />
             </Grid>
 
             <Grid item xs={12} md={6}>
               <TextField
-                label="Tipo de Cliente"
-                name="tipoCliente"
-                value={formData.tipoCliente || ''}
-                onChange={(e) => handleChange('tipoCliente', e.target.value)}
-                required
+                label="Teléfono / Celular"
+                name="Teléfono / Celular"
+                value={formData.telefono_contacto || ''}
+                onChange={(e) => handleChange('telefono_contacto', e.target.value)}
+                // required
                 disabled={isSubmitting || formSubmitted}
                 fullWidth
                 variant="outlined"
@@ -228,8 +270,46 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
               />
             </Grid>
 
-
             <Grid item xs={12} md={6}>
+              <TextField
+                label="Email"
+                name="Email"
+                type="email"
+                value={formData.email_contacto || ''}
+                onChange={(e) => handleChange('email_contacto', e.target.value)}
+                // required
+                disabled={isSubmitting || formSubmitted}
+                fullWidth
+                variant="outlined"
+                size="small"
+                className={styles.inputField}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Información Relevante"
+                name="Información Relevante"
+                value={formData.info_adicional || ''}
+                onChange={(e) => handleChange('info_adicional', e.target.value)}
+                multiline
+                rows={3}
+                fullWidth
+                variant="outlined"
+                size="small"
+                disabled={isSubmitting || formSubmitted}
+                className={styles.inputField}
+              />
+            </Grid>
+
+            {/* <Grid item xs={12}>
+              <Divider />
+              <Typography variant="h6" className={styles.sectionTitle} style={{ marginTop: '7px' }}>
+                Información Adicional
+              </Typography>
+            </Grid> */}
+
+            {/* <Grid item xs={12} md={6}>
               <DatePicker
                 label="Último Contacto"
                 value={stringToDate(formData.ultimoContacto)}
@@ -251,7 +331,7 @@ export const ProspectForm: React.FC<ProspectFormProps> = ({
                   }
                 }}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
 
           <div className={styles.formActions}>

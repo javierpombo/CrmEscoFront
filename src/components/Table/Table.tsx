@@ -51,7 +51,7 @@ const Table: React.FC<TableProps> = ({ data, columns }) => {
     }
 
     // Campo tipoCliente/Sector - podemos darle un estilo especial
-    if (field === 'tipoCliente' || field === 'sector') {
+    if (field === 'cargo_contacto' || field === 'sector') {
       return (
         <span className={`${styles.sectorPill} ${styles.colorBlue}`}>
           {value}

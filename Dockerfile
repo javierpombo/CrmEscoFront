@@ -15,7 +15,7 @@ RUN chown -R appuser:appgroup /app/build
 FROM nginx:alpine AS production
 
 # Instalar envsubst (gettext) para reemplazar variables en config.template.js
-RUN apk add --no-cache gettext
+RUN apk update && apk add --no-cache gettext
 
 # Copiar configuración de nginx
 COPY settings.conf /etc/nginx/conf.d/default.conf
