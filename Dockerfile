@@ -15,7 +15,7 @@ RUN chown -R appuser:appgroup /app/build
 FROM nginx:alpine AS production
 
 # Instalar envsubst (gettext) para reemplazar variables en config.template.js
-RUN apk update && apk add --no-cache gettext
+RUN apk add --no-cache gettext
 
 # Copiar configuración de nginx
 COPY settings.conf /etc/nginx/conf.d/default.conf
@@ -55,4 +55,4 @@ RUN chown -R nginx:nginx /usr/share/nginx/html \
 EXPOSE 80 443
 
 # Usar el entrypoint para inyectar variables y arrancar Nginx
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

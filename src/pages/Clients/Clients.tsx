@@ -12,6 +12,9 @@ import { clientesService } from '../../services/clientesService';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
 
 // Interfaz actualizada para incluir riesgos y fecha de vencimiento
 interface ClientDashboard {
@@ -20,11 +23,15 @@ interface ClientDashboard {
   oficial: string;
   referente: string;
   Numero: string;
-  risks: Array<{ id: string; name: string }>; // Array de riesgos
   fechaVencimiento: string | null; // Fecha de vencimiento
   cuit?: string;
   mail?: string;
   sector?: string;
+  fx?: string;
+  sob?: string;
+  credito?: string;
+  tasa?: string;
+  equity?: string;
 }
 
 // Interfaz para las columnas de la tabla
@@ -65,6 +72,11 @@ const ClientsDashboard: React.FC = () => {
   const [availableRisks, setAvailableRisks] = useState<Array<{ id: string; name: string }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [sortByDueDate, setSortByDueDate] = useState<'ascending' | 'descending' | null>(null);
+  const [fxRiskFilter, setFxRiskFilter] = useState<number>(2);
+  const [sobRiskFilter, setSobRiskFilter] = useState<number>(2);
+  const [creditoRiskFilter, setCreditoRiskFilter] = useState<number>(2);
+  const [tasaRiskFilter, setTasaRiskFilter] = useState<number>(2);
+  const [equityRiskFilter, setEquityRiskFilter] = useState<number>(2);
 
   // Estado para ordenamiento
   const [sortConfig, setSortConfig] = useState<{
@@ -79,23 +91,6 @@ const ClientsDashboard: React.FC = () => {
 
   // Aplicar debounce al término de búsqueda
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
-  // Función para renderizar los riesgos (máximo 5)
-  const renderRisks = (risks: Array<{ id: string; name: string }>) => {
-    if (!risks || risks.length === 0) return '-';
-
-    const displayedRisks = risks.slice(0, 5);
-    return (
-      <div className={styles.riskContainer}>
-        {displayedRisks.map((risk, index) => (
-          <span key={index} className={styles.riskTag}>
-            {risk.name || 'Riesgo'}
-          </span>
-        ))}
-        {risks.length > 5 && <span className={styles.moreRisks}>+{risks.length - 5}</span>}
-      </div>
-    );
-  };
 
   // Función para manejar el ordenamiento (igual que en ProspectList)
   const requestSort = (key: string) => {
@@ -127,7 +122,123 @@ const ClientsDashboard: React.FC = () => {
     return <SwapVertIcon fontSize="small" />;
   };
 
-  // Columnas actualizadas para la tabla (quitado 'activo', agregado 'risks' y 'fechaVencimiento')
+  // Modifica las columnas de riesgo para manejar valores numéricos en lugar de strings
+  const riskColumns = [
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          FX
+          <IconButton size="small" onClick={() => handleRiskFilterToggle('fx')}>
+            {fxRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              fxRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+          </IconButton>
+        </div>
+      ),
+      field: 'fx',
+      render: (row: any) => (
+        // Manejar el valor como número en lugar de string
+        parseInt(row.fx) == 1
+          ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
+          : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
+      )
+    },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Sob
+          <IconButton size="small" onClick={() => handleRiskFilterToggle('sob')}>
+            {sobRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              sobRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+          </IconButton>
+        </div>
+      ),
+      field: 'sob',
+      render: (row: any) => (
+        parseInt(row.sob) == 1
+          ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
+          : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
+      )
+    },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Credito
+          <IconButton size="small" onClick={() => handleRiskFilterToggle('credito')}>
+            {creditoRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              creditoRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+          </IconButton>
+        </div>
+      ),
+      field: 'credito',
+      render: (row: any) => (
+        parseInt(row.credito) == 1
+          ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
+          : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
+      )
+    },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Tasa
+          <IconButton size="small" onClick={() => handleRiskFilterToggle('tasa')}>
+            {tasaRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              tasaRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+          </IconButton>
+        </div>
+      ),
+      field: 'tasa',
+      render: (row: any) => (
+        parseInt(row.tasa) == 1
+          ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
+          : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
+      )
+    },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Equity
+          <IconButton size="small" onClick={() => handleRiskFilterToggle('equity')}>
+            {equityRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              equityRiskFilter === 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+          </IconButton>
+        </div>
+      ),
+      field: 'equity',
+      render: (row: any) => (
+        parseInt(row.equity) == 1
+          ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
+          : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
+      )
+    }
+  ];
+
+
+  const handleRiskFilterToggle = (riskType: string) => {
+    switch (riskType) {
+      case 'fx':
+        setFxRiskFilter(prev => prev == null || prev == 2 ? 1 : prev === 1 ? 0 : 2);
+        break;
+      case 'sob':
+        setSobRiskFilter(prev => prev == null || prev == 2 ? 1 : prev == 1 ? 0 : 2);
+        break;
+      case 'credito':
+        setCreditoRiskFilter(prev => prev == null || prev == 2 ? 1 : prev === 1 ? 0 : 2);
+        break;
+      case 'tasa':
+        setTasaRiskFilter(prev => prev == null || prev == 2 ? 1 : prev == 1 ? 0 : 2);
+        break;
+      case 'equity':
+        setEquityRiskFilter(prev => prev == null || prev == 2 ? 1 : prev == 1 ? 0 : 2);
+        break;
+    }
+    setCurrentPage(1);
+  };
+
   const clientColumns: Array<{
     label: string | React.ReactNode;
     field: string;
@@ -137,11 +248,7 @@ const ClientsDashboard: React.FC = () => {
       { label: 'Oficial', field: 'oficial' },
       { label: 'Referente', field: 'referente' },
       { label: 'Número Comitente', field: 'Numero' },
-      {
-        label: 'Riesgos',
-        field: 'risks',
-        render: (row: ClientDashboard) => renderRisks(row.risks)
-      },
+      ...riskColumns,
       {
         label: (
           <div className={styles.sortableHeader}>
@@ -200,17 +307,26 @@ const ClientsDashboard: React.FC = () => {
     setError(null);
 
     try {
-      // Usamos la función optimizada de searchClients que hace una sola petición
-      const result = await searchClients(
-        debouncedSearchTerm,
+      // Construir los parámetros de consulta basados en los filtros de riesgo
+      const riskParams: any = {};
+      if (fxRiskFilter !== 2) riskParams.fx = fxRiskFilter;
+      if (sobRiskFilter !== 2) riskParams.sob = sobRiskFilter;
+      if (creditoRiskFilter !== 2) riskParams.credito = creditoRiskFilter;
+      if (tasaRiskFilter !== 2) riskParams.tasa = tasaRiskFilter;
+      if (equityRiskFilter !== 2) riskParams.equity = equityRiskFilter;
+
+      // Añadir el término de búsqueda como un parámetro adicional
+      riskParams.search_term = debouncedSearchTerm;
+
+      const result = await getClients(
         currentPage,
         filterStatus,
-        filterRisk,
-        sortConfig.key,
-        sortConfig.direction
+        sortConfig.key || 'fechaVencimiento',
+        sortConfig.direction || 'ascending',
+        null,
+        riskParams
       );
 
-      // Los datos ya vienen transformados de la API, no necesitamos procesarlos más
       setClients(result.data);
       setTotalPages(result.pagination.lastPage);
       setTotalItems(result.pagination.total);
@@ -225,9 +341,42 @@ const ClientsDashboard: React.FC = () => {
   // Cargar clientes cada vez que cambie la página, filtro de estado o configuración de ordenamiento
   useEffect(() => {
     if (!isSearching) {
-      fetchClients();
+      const fetchClientsWithRiskFilters = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          // Construir los parámetros de consulta basados en los filtros de riesgo
+          const riskParams: any = {};
+          if (fxRiskFilter !== 2) riskParams.fx = fxRiskFilter;
+          if (sobRiskFilter !== 2) riskParams.sob = sobRiskFilter;
+          if (creditoRiskFilter !== 2) riskParams.credito = creditoRiskFilter;
+          if (tasaRiskFilter !== 2) riskParams.tasa = tasaRiskFilter;
+          if (equityRiskFilter !== 2) riskParams.equity = equityRiskFilter;
+
+          const result = await getClients(
+            currentPage,
+            filterStatus,
+            sortConfig.key || 'fechaVencimiento',
+            sortConfig.direction || 'ascending',
+            null,
+            riskParams
+          );
+
+          setClients(result.data);
+          setTotalPages(result.pagination.lastPage);
+          setTotalItems(result.pagination.total);
+        } catch (err) {
+          console.error('Error al cargar clientes:', err);
+          setError('Error al cargar los datos. Por favor, intenta de nuevo más tarde.');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchClientsWithRiskFilters();
     }
-  }, [currentPage, filterStatus, filterRisk, sortConfig]);
+  }, [currentPage, filterStatus, sortConfig, fxRiskFilter, sobRiskFilter, creditoRiskFilter, tasaRiskFilter, equityRiskFilter]);
+
 
   // Efecto para buscar cuando cambia el término de búsqueda debounced
   useEffect(() => {
@@ -339,21 +488,6 @@ const ClientsDashboard: React.FC = () => {
                   buttonText="Estado"
                   width="150px"
                 />
-                {availableRisks.length > 0 && (
-                  <FilterDropdown
-                    options={[
-                      { id: 'null', name: 'Sin filtro de riesgo', icon: '/next-icon.svg' },
-                      ...availableRisks.map(risk => ({
-                        id: risk.id,
-                        name: risk.name,
-                        icon: '/next-icon.svg'
-                      }))
-                    ]}
-                    onFilterSelect={handleFilterRiskSelect}
-                    buttonText="Riesgo"
-                    width="200px"
-                  />
-                )}
                 <TextField
                   className={styles.search}
                   placeholder="Buscar"
@@ -377,8 +511,6 @@ const ClientsDashboard: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* Tabla de Clientes */}
             <div className={styles.tableHeaderTabsParent}>
               <div className={styles.tableHeaderTabs}>
                 <Typography className={styles.contactosActivos} variant="h2" component="h2">

@@ -387,7 +387,6 @@ const ProspectList: React.FC = () => {
                 /> */}
               </div>
             </div>
-            {/* PARTE QUE FALTA: Tabla de datos */}
             <div className={styles.tableHeaderTabsParent}>
               <div className={styles.tableHeaderTabs}>
                 <Typography className={styles.contactosActivos} variant="h2" component="h2">
@@ -403,7 +402,6 @@ const ProspectList: React.FC = () => {
             </div>
           </div>
         </section>
-        {/* PARTE QUE FALTA: Paginación */}
         <div className={styles.footer}>
           <Pagination
             currentPage={currentPage}
@@ -411,7 +409,6 @@ const ProspectList: React.FC = () => {
             onPageChange={handlePageChange}
           />
         </div>
-        {/* PARTE QUE FALTA: Modal para crear prospecto */}
         <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nuevo Prospecto">
           <ProspectForm onSubmit={handleCreateProspect} onCancel={() => setIsModalOpen(false)} />
         </Modal>

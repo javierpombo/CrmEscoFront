@@ -10,6 +10,7 @@ import Dashboard from "./pages/Clients/Clients";
 import ClientView from "./pages/Clients/ClientView";
 import ProspectList from "./pages/Prospects/ProspectList";
 import ProspectoView from './pages/Prospects/ProspectoView';
+import RiskConfigPage from './pages/Config/InstrumentRiskConfig'
 import '@mui/material/styles';
 
 function App() {
@@ -54,6 +55,11 @@ function App() {
         metaDescription = "Cliente";
         favicon = "/menu-act.svg";
         break;
+      case "/crm/instrument":
+        title = "Intrumentos";
+        metaDescription = "Intrumentos";
+        favicon = "/menu-act.svg";
+        break;
     }
 
     if (title) {
@@ -87,6 +93,7 @@ function App() {
       <Route path="/crm/prospectos" element={<ProspectList />} />
       <Route path="/crm/prospectos/detalle/:id" element={<ProspectoView />} />
       <Route path="/crm/clients/details/:numcomitente" element={<ClientView />} />
+      <Route path="/crm/instrument" element={<RiskConfigPage />} />
     </Routes>
   );
 }

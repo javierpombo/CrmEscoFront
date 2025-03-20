@@ -1,0 +1,273 @@
+/* Estilos generales */
+.instrument-risk-config {
+  font-family: Arial, sans-serif;
+  color: #333;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Cabecera */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #0885e6;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  padding: 10px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  width: 300px;
+  font-size: 14px;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  font-size: 16px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.tab.active {
+  color: #0885e6;
+  font-weight: bold;
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #0885e6;
+}
+
+/* Contenido principal */
+.content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-height: 500px;
+}
+
+/* Vista de riesgos */
+.risks-view {
+  display: flex;
+  min-height: 500px;
+}
+
+.left-panel {
+  width: 300px;
+  border-right: 1px solid #e0e0e0;
+  padding: 15px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.new-button {
+  background-color: #0885e6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.new-button:hover {
+  background-color: #0673c6;
+}
+
+.risks-list {
+  margin-top: 10px;
+}
+
+.risk-item {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.risk-item:hover {
+  background-color: #f5f5f5;
+}
+
+.risk-item.selected {
+  border-color: #0885e6;
+  background-color: rgba(8, 133, 230, 0.05);
+  box-shadow: 0 1px 3px rgba(8, 133, 230, 0.2);
+}
+
+.risk-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.risk-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.risk-type {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.risk-type.fx {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+.risk-type.sobo {
+  background-color: #f3e5f5;
+  color: #4a148c;
+}
+
+.risk-type.credito {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.risk-type.tasa {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.risk-type.equity {
+  background-color: #ffebee;
+  color: #b71c1c;
+}
+
+.right-panel {
+  flex: 1;
+  padding: 15px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.risk-details h2 {
+  margin: 0 0 15px 0;
+  font-size: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.risk-attributes {
+  margin-bottom: 20px;
+}
+
+.risk-attributes h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.attributes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.attribute {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.attribute-label {
+  font-weight: 500;
+}
+
+.attribute-value {
+  font-weight: 600;
+}
+
+.attribute-value.yes {
+  color: #4CAF50;
+}
+
+.attribute-value.no {
+  color: #F44336;
+}
+
+.assign-instrument {
+  margin-bottom: 20px;
+}
+
+.assign-instrument h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.assign-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.instrument-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.assign-button {
+  background-color: #0885e6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.assign-button:disabled {
+  background-color: #cccccc;
+}

@@ -93,7 +93,7 @@
   box-shadow: 0px 1px 2px rgba(10, 13, 18, 0.05);
 }
 
-/* Contenedor general para la(s) tabla(s) */
+/* Contenedor general para la(s) tabla(s) - MEJORADO */
 .tableHeaderTabsParent {
   align-self: stretch;
   display: flex;
@@ -103,24 +103,25 @@
   gap: var(--gap-5xl);
   font-size: var(--global-tokens-headings-h-6-size);
   width: 100%;
+  margin-bottom: 10px;
 }
 
-/* Card o bloque que encierra cada tabla */
 .tableHeaderTabs {
   align-self: stretch;
   border-radius: var(--br-xl);
   border: 1px solid var(--neutral-neutral-200);
+  box-shadow: 0px 1px 4px rgba(10, 13, 18, 0.05);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: flex-start;
-  padding: var(--padding-sm) var(--padding-mini);
-  gap: var(--gap-base);
+  padding: var(--padding-sm) var(--padding-sm); 
+  gap: var(--gap-xs); 
   width: 100%;
   background-color: #fff;
 }
 
-/* Encabezado de cada sección (por ejemplo, 'Contactos activos') */
+/* Encabezado de cada sección - MEJORADO */
 .sectionHeader {
   width: 100%;
   display: flex;
@@ -131,13 +132,38 @@
 }
 
 .contactosActivos {
-  margin: 0;
+  margin: 0 0 8px 0 !important;
   align-self: stretch;
   position: relative;
-  font-size: 22px !important;
+  font-size: 22px !important; 
   font-weight: 700 !important;
   line-height: 28px !important;
   color: var(--neutral-neutral-1000);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--neutral-neutral-200);
+  width: 100%;
+}
+
+/* Estilos para mensajes de error y carga */
+.errorMessage {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.loadingIndicator {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 0;
+  font-size: 16px;
+  color: var(--neutral-neutral-800);
 }
 
 /* Contenedor de los 'chips' de filtros activos */
@@ -177,6 +203,46 @@
   overflow-x: auto;
 }
 
+/* Mejoras para la tabla */
+.tableHeaderTabs :global(table) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.tableHeaderTabs :global(thead th) {
+  background-color: var(--neutral-neutral-100);
+  color: var(--neutral-neutral-900);
+  font-weight: 600;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--neutral-neutral-200); 
+  white-space: nowrap;
+}
+
+/* Estilo para filas */
+.tableHeaderTabs :global(tbody td) {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--neutral-neutral-200);
+  color: var(--neutral-neutral-1000);
+}
+
+.tableHeaderTabs :global(tbody tr:hover) {
+  background-color: rgba(8, 133, 230, 0.05);
+}
+
+/* Estilo para celdas */
+.tableHeaderTabs :global(tbody td) {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--neutral-neutral-200);
+  color: var(--neutral-neutral-1000);
+}
+
+/* Estilo para la última fila */
+.tableHeaderTabs :global(tbody tr:last-child td) {
+  border-bottom: none;
+}
+
 /* Botón estilo */
 .button {
   width: 110px;
@@ -199,6 +265,83 @@
   color: var(--neutral-neutral-900);
   font-size: var(--global-tokens-body-b-1-size);
   width: 100%;
+}
+
+/* Opcionales (avatar, pills, etc.) */
+.avatarContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatarIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.statusPill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.primaryPill {
+  background-color: rgba(8, 133, 230, 0.1);
+  color: #0885e6;
+}
+
+.errorPill {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
+/*******************************
+ * FOOTER Y PAGINACIÓN
+ *******************************/
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--neutral-neutral-200);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pagination {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: #fff;
+  box-sizing: border-box;
+  width: auto;
+}
+
+/* Estilos simples para los indicadores de riesgo */
+.sectorPill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Para los valores "No" (verde) */
+.colorGreen {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+/* Para los valores "Sí" (rojo) */
+.colorRed {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
 }
 
 /* Media Queries */
@@ -248,62 +391,15 @@
 
   .contactosActivos {
     font-size: 20px !important;
-    line-height: 24px !important;
+    line-height: 20px !important;
   }
-}
-
-/* Opcionales (avatar, pills, etc.) */
-.avatarContainer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.avatarIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-}
-
-.statusPill {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.primaryPill {
-  background-color: rgba(8, 133, 230, 0.1);
-  color: #0885e6;
-}
-
-.errorPill {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: #F44336;
-}
-
-/*******************************
- * FOOTER Y PAGINACIÓN
- *******************************/
- .footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px 24px;
-  border-top: 1px solid var(--neutral-neutral-200);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.pagination {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background-color: #fff;
-  box-sizing: border-box;
-  width: auto;
+  
+  .tableHeaderTabs {
+    padding: var(--padding-sm) var(--padding-sm);
+  }
+  
+  .tableHeaderTabs :global(th),
+  .tableHeaderTabs :global(td) {
+    padding: 10px 12px;
+  }
 }

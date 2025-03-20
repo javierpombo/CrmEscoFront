@@ -5,7 +5,7 @@
       "link": "https://datascopeqa.davalores.com.ar/home"
     },
     {
-      "id": 6,
+      "id": 2,
       "text": "CRM",
       "subItems": [
         {
@@ -17,6 +17,17 @@
           "id": 602,
           "text": "Clientes",
           "link": "/crm/clients"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "text": "Configuraciones",
+      "subItems": [
+        {
+          "id": 601,
+          "text": "Instrumentos",
+          "link": "/crm/instrument"
         }
       ]
     }

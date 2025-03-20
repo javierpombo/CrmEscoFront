@@ -345,27 +345,27 @@ const ClientView: React.FC = () => {
         if (!client || !clientNumComitente || !actionToEdit ||
             !actionToEdit.action_date || !actionToEdit.description ||
             !actionToEdit.next_contact || !actionToEdit.user_id) return;
-      
+
         try {
-          const updatedAction = await clientesService.updateAction(
-            actionToEdit.id.toString(),
-            actionToEdit 
-          );
-      
-          if (updatedAction) {
-            setClient(prev => prev ? {
-              ...prev,
-              actions: (prev.actions ?? []).map(a =>
-                a.id === updatedAction.id ? updatedAction : a
-              )
-            } : prev);
-          }
+            const updatedAction = await clientesService.updateAction(
+                actionToEdit.id.toString(),
+                actionToEdit
+            );
+
+            if (updatedAction) {
+                setClient(prev => prev ? {
+                    ...prev,
+                    actions: (prev.actions ?? []).map(a =>
+                        a.id === updatedAction.id ? updatedAction : a
+                    )
+                } : prev);
+            }
         } catch (err) {
-          console.error('Error al actualizar acción:', err);
+            console.error('Error al actualizar acción:', err);
         } finally {
-          handleCloseEditAction();
+            handleCloseEditAction();
         }
-      };
+    };
 
     const handleOpenRiskDialog = () => {
         setRiskDialogOpen(true);
@@ -377,22 +377,22 @@ const ClientView: React.FC = () => {
 
     const handleCloseAction = async (actionId: string | number) => {
         if (!client) return;
-    
+
         try {
             const actionToClose = client.actions?.find(a => a.id === actionId) as ExtendedClientAction;
             if (!actionToClose) return;
-    
+
             const updatedAction: ExtendedClientAction = {
                 ...actionToClose,
                 status: 'cerrado'
             };
-    
+
             // Modificado para enviar el ID de la acción como primer parámetro
             const result = await clientesService.updateAction(
                 actionId.toString(),  // ID de la acción como primer parámetro
                 updatedAction         // La acción a actualizar como segundo parámetro
             );
-            
+
             if (result) {
                 setClient(prev => {
                     if (!prev) return null;
@@ -621,74 +621,52 @@ const ClientView: React.FC = () => {
                         <Typography variant="subtitle1" fontWeight="medium">
                             Perfil de Riesgo
                         </Typography>
-                        <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={<EditIcon />}
-                            onClick={handleOpenRiskDialog}
-                        >
-                            Gestionar Riesgos
-                        </Button>
                     </Box>
                     <Divider sx={{ mb: 2 }} />
 
-                    {clientRisks.length > 0 ? (
-                        <Grid container spacing={2}>
-                            {clientRisks.map((risk) => (
-                                <Grid item xs={12} md={6} lg={4} key={risk.id}>
-                                    <Accordion variant="outlined" sx={{ mb: 1, boxShadow: 'none' }}>
-                                        <AccordionSummary
-                                            expandIcon={<ExpandMoreIcon />}
-                                            sx={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
-                                        >
-                                            <Box>
-                                                <Typography variant="body2" fontWeight="medium">
-                                                    {risk.description}
-                                                </Typography>
-                                                {renderRiskIcons(risk)}
-                                            </Box>
-                                        </AccordionSummary>
-                                        <AccordionDetails sx={{ p: 1, backgroundColor: 'rgba(0, 0, 0, 0.01)' }}>
-                                            <Typography variant="caption" color="textSecondary" gutterBottom>
-                                                Instrumentos asociados:
-                                            </Typography>
-                                            {riskInstruments[risk.id]?.length > 0 ? (
-                                                <List dense disablePadding>
-                                                    {riskInstruments[risk.id].map((instrument) => (
-                                                        <ListItem
-                                                            key={instrument.id_instruments}
-                                                            sx={{ p: 0.5, pl: 1 }}
-                                                            secondaryAction={
-                                                                <Chip
-                                                                    label={instrument.abbreviation}
-                                                                    size="small"
-                                                                    variant="outlined"
-                                                                    sx={{ fontSize: '0.7rem' }}
-                                                                />
-                                                            }
-                                                        >
-                                                            <ListItemText
-                                                                primary={instrument.description}
-                                                                primaryTypographyProps={{ variant: 'body2' }}
-                                                            />
-                                                        </ListItem>
-                                                    ))}
-                                                </List>
-                                            ) : (
-                                                <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 1 }}>
-                                                    No hay instrumentos asociados
-                                                </Typography>
-                                            )}
-                                        </AccordionDetails>
-                                    </Accordion>
-                                </Grid>
-                            ))}
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <Paper elevation={1} sx={{ p: 2, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                                <Box display="flex" flexWrap="wrap" gap={2} justifyContent="center">
+                                    <Chip
+                                        icon={<SwapHorizIcon />}
+                                        label={clientRisks.some(r => r.fx === 1) ? "FX: Sí" : "FX: No"}
+                                        color={clientRisks.some(r => r.fx === 1) ? "primary" : "default"}
+                                        variant="outlined"
+                                        sx={{ minWidth: '100px' }}
+                                    />
+                                    <Chip
+                                        icon={<AccountBalanceIcon />}
+                                        label={clientRisks.some(r => r.sobo === 1) ? "Soberano: Sí" : "Soberano: No"}
+                                        color={clientRisks.some(r => r.sobo === 1) ? "secondary" : "default"}
+                                        variant="outlined"
+                                        sx={{ minWidth: '140px' }}
+                                    />
+                                    <Chip
+                                        icon={<AttachMoneyIcon />}
+                                        label={clientRisks.some(r => r.credito === 1) ? "Crédito: Sí" : "Crédito: No"}
+                                        color={clientRisks.some(r => r.credito === 1) ? "info" : "default"}
+                                        variant="outlined"
+                                        sx={{ minWidth: '120px' }}
+                                    />
+                                    <Chip
+                                        icon={<ShowChartIcon />}
+                                        label={clientRisks.some(r => r.tasa === 1) ? "Tasa: Sí" : "Tasa: No"}
+                                        color={clientRisks.some(r => r.tasa === 1) ? "success" : "default"}
+                                        variant="outlined"
+                                        sx={{ minWidth: '100px' }}
+                                    />
+                                    <Chip
+                                        icon={<TrendingUpIcon />}
+                                        label={clientRisks.some(r => r.equity === 1) ? "Equity: Sí" : "Equity: No"}
+                                        color={clientRisks.some(r => r.equity === 1) ? "warning" : "default"}
+                                        variant="outlined"
+                                        sx={{ minWidth: '120px' }}
+                                    />
+                                </Box>
+                            </Paper>
                         </Grid>
-                    ) : (
-                        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 1 }}>
-                            No hay riesgos asignados a este cliente
-                        </Typography>
-                    )}
+                    </Grid>
                 </Box>
             </Paper>
         );

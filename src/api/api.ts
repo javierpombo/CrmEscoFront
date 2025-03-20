@@ -89,7 +89,7 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
   const ultimoContacto = lastAction?.action_date || '-';
 
   return {
-    id: prospect.id ? prospect.id.toString() : '0', 
+    id: prospect.id ? prospect.id.toString() : '0',
     nombreCliente: prospect.name,
     contacto: prospect.company_contact,
     oficial: prospect.official,
@@ -395,7 +395,8 @@ export async function getClients(
   statusFilter: 'todos' | 'activos' | 'inactivos' = 'todos',
   sortField: string | null = null,
   sortDirection: 'ascending' | 'descending' | null = null,
-  riskFilter: string | null = null
+  riskFilter: string | null = null,
+  riskParams: { fx?: number; sob?: number; credito?: number; tasa?: number; equity?: number; search_term?: string } = {}
 ) {
   try {
     // Construir la URL base usando URLSearchParams
@@ -406,6 +407,26 @@ export async function getClients(
     // Añadir filtro por riesgo si está presente
     if (riskFilter) {
       params.append('risk_id', riskFilter);
+    }
+
+    if (riskParams.fx !== undefined && riskParams.fx !== 2) {
+      params.append('fx', riskParams.fx.toString());
+    }
+    if (riskParams.sob !== undefined && riskParams.sob !== 2) {
+      params.append('sob', riskParams.sob.toString());
+    }
+    if (riskParams.credito !== undefined && riskParams.credito !== 2) {
+      params.append('credito', riskParams.credito.toString());
+    }
+    if (riskParams.tasa !== undefined && riskParams.tasa !== 2) {
+      params.append('tasa', riskParams.tasa.toString());
+    }
+    if (riskParams.equity !== undefined && riskParams.equity !== 2) {
+      params.append('equity', riskParams.equity.toString());
+    }
+
+    if (riskParams.search_term) {
+      params.append('search_term', riskParams.search_term);
     }
 
     // Añadir parámetros de ordenamiento si están presentes
@@ -537,7 +558,7 @@ export async function searchClients(
   filter: 'todos' | 'activos' | 'inactivos' = 'todos',
   riskFilter: string | null = null,
   sortField: string | null = null,
-  sortDirection: 'ascending' | 'descending' | null = null
+  sortDirection: 'ascending' | 'descending' | null = null,
 ) {
   try {
     // Construir URL base para búsqueda
