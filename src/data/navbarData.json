@@ -19,17 +19,6 @@
           "link": "/crm/clients"
         }
       ]
-    },
-    {
-      "id": 3,
-      "text": "Configuraciones",
-      "subItems": [
-        {
-          "id": 601,
-          "text": "Instrumentos",
-          "link": "/crm/instrument"
-        }
-      ]
     }
   ]
   

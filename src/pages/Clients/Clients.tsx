@@ -121,6 +121,16 @@ const ClientsDashboard: React.FC = () => {
 
     return <SwapVertIcon fontSize="small" />;
   };
+  /*limpia los filtros */
+  const clearAllFilters = () => {
+    setFxRiskFilter(2);
+    setSobRiskFilter(2);
+    setCreditoRiskFilter(2);
+    setTasaRiskFilter(2);
+    setEquityRiskFilter(2);
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
 
   // Modifica las columnas de riesgo para manejar valores numéricos en lugar de strings
   const riskColumns = [
@@ -130,8 +140,7 @@ const ClientsDashboard: React.FC = () => {
           FX
           <IconButton size="small" onClick={() => handleRiskFilterToggle('fx')}>
             {fxRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              fxRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
-                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
@@ -149,8 +158,7 @@ const ClientsDashboard: React.FC = () => {
           Sob
           <IconButton size="small" onClick={() => handleRiskFilterToggle('sob')}>
             {sobRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              sobRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
-                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
@@ -167,8 +175,7 @@ const ClientsDashboard: React.FC = () => {
           Credito
           <IconButton size="small" onClick={() => handleRiskFilterToggle('credito')}>
             {creditoRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              creditoRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
-                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
@@ -185,8 +192,7 @@ const ClientsDashboard: React.FC = () => {
           Tasa
           <IconButton size="small" onClick={() => handleRiskFilterToggle('tasa')}>
             {tasaRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              tasaRiskFilter == 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
-                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
@@ -203,8 +209,7 @@ const ClientsDashboard: React.FC = () => {
           Equity
           <IconButton size="small" onClick={() => handleRiskFilterToggle('equity')}>
             {equityRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              equityRiskFilter === 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
-                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
@@ -509,6 +514,22 @@ const ClientsDashboard: React.FC = () => {
                     width: '320px',
                   }}
                 />
+                <Button
+                  variant="outlined"
+                  onClick={clearAllFilters}
+                  sx={{
+                    height: '44px',
+                    borderColor: '#e7e7e7',
+                    color: '#777',
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: '#c7c7c7',
+                      backgroundColor: '#f9f9f9',
+                    }
+                  }}
+                >
+                  Limpiar Filtros
+                </Button>
               </div>
             </div>
             <div className={styles.tableHeaderTabsParent}>
