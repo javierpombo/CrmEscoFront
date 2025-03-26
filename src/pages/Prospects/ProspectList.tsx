@@ -364,7 +364,7 @@ const ProspectList: React.FC = () => {
                   buttonText="Estado"
                   width="150px"
                 />
-                {/* <TextField
+                 <TextField
                   className={styles.search}
                   placeholder="Buscar"
                   variant="outlined"
@@ -384,7 +384,7 @@ const ProspectList: React.FC = () => {
                     },
                     width: '320px',
                   }}
-                /> */}
+                /> 
               </div>
             </div>
             <div className={styles.tableHeaderTabsParent}>
