@@ -86,7 +86,10 @@ const Table: React.FC<TableProps> = ({ data, columns }) => {
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} className={styles.tableRow}>
+            <tr 
+              key={rowIndex} 
+              className={`${styles.tableRow} ${row.rowClassName || ''}`}
+            >
               {columns.map((col, colIndex) => (
                 <td key={colIndex} className={styles.tableCell}>
                   {col.render

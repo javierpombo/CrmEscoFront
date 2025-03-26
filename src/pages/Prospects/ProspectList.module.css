@@ -349,6 +349,10 @@
     background-color: #b71c1c;
 }
 
+.clientRow {
+    background-color: #97979754 !important; /* Fondo gris claro para filas de clientes */
+  }
+
 /* Responsive */
 @media screen and (max-width: 750px) {
     .headervariant3Parent {

@@ -39,6 +39,7 @@ interface BackendProspect {
   referent: string;
   official: string;
   last_contact: string | null;
+  is_client:boolean;
   events?: BackendEvent[];
   actions?: BackendAction[];
   official_user?: any;
@@ -104,7 +105,7 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
     tipoAccion: lastAction?.description || '',
     fechaVencimiento: lastAction?.next_contact || '-',
     numComitente: '',  // Ajusta si en el futuro viene desde el backend
-    yaEsCliente: false,
+    yaEsCliente: prospect.is_client,
     tipoClienteAccion: '',
     activo: 'activo',
     notas: (prospect.events || [])

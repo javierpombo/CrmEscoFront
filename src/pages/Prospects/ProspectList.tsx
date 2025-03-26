@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // Importaciones de componentes
 import Navbar from '../../components/Navigation/Navbar/Navbar';
@@ -74,6 +75,7 @@ const ProspectList: React.FC = () => {
   const renderUserData = (user: any) => {
     return user ? user.name : '-';
   };
+
 
   // Función para obtener prospectos
   const fetchProspectos = async () => {
@@ -318,20 +320,30 @@ const ProspectList: React.FC = () => {
     }
   };
 
-  // Agregar columna de acciones a cada prospecto
-  const dataWithActions = prospectos.map(prospecto => ({
-    ...prospecto,
-    acciones: (
-      <div className={styles.actionButtons}>
-        <button className={styles.viewButton} onClick={() => handleViewProspect(prospecto.id || '')}>
-          Ver
-        </button>
-        <button className={styles.deleteButton} onClick={() => handleDeleteProspect(prospecto.id || '')}>
-          Eliminar
-        </button>
-      </div>
-    )
-  }));
+
+  const dataWithActions = prospectos.map(prospecto => {
+    const isClient = prospecto.is_client === true || prospecto.is_client === 1 || prospecto.yaEsCliente === true;
+
+    return {
+      ...prospecto,
+      rowClassName: isClient ? styles.clientRow : '',
+      acciones: (
+        <div className={styles.actionButtons}>
+          <button className={styles.viewButton} onClick={() => handleViewProspect(prospecto.id || '')}>
+            Ver
+          </button>
+          <button className={styles.deleteButton} onClick={() => handleDeleteProspect(prospecto.id || '')}>
+            Eliminar
+          </button>
+          {isClient && (
+            <span title="Este prospecto ya es cliente">
+              <CheckCircleIcon style={{ color: '#4CAF50', fontSize: '20px', marginLeft: '8px' }} />
+            </span>
+          )}
+        </div>
+      )
+    };
+  });
 
   const columnsWithActions = [
     ...prospectColumns,
@@ -364,7 +376,7 @@ const ProspectList: React.FC = () => {
                   buttonText="Estado"
                   width="150px"
                 />
-                 <TextField
+                <TextField
                   className={styles.search}
                   placeholder="Buscar"
                   variant="outlined"
@@ -384,7 +396,7 @@ const ProspectList: React.FC = () => {
                     },
                     width: '320px',
                   }}
-                /> 
+                />
               </div>
             </div>
             <div className={styles.tableHeaderTabsParent}>
