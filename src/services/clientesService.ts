@@ -80,7 +80,7 @@ function mapBackendClientToFrontend(client: BackendClient): Client {
       if (!b.next_contact) return -1;
       return new Date(a.next_contact).getTime() - new Date(b.next_contact).getTime();
     });
-    
+
     if (sortedActions[0].next_contact) {
       fechaVencimiento = sortedActions[0].next_contact;
     }
@@ -127,18 +127,18 @@ export const clientesService = {
     try {
       // Construir la URL del endpoint con los parámetros de consulta
       let url = `${API_BASE_URL}/clients?page=${page}&status=${statusFilter}`;
-  
+
       if (riskFilter) {
         url += `&risk_id=${riskFilter}`;
       }
-  
+
       if (sortField && sortDirection) {
         const direction = sortDirection === 'ascending' ? 'asc' : 'desc';
         url += `&sort_by=${sortField}&sort_dir=${direction}`;
       }
-  
+
       const response = await axios.get<PaginatedResponse<BackendClient>>(url);
-  
+
       // Mapear clientes y mantener la información de paginación
       const clients = response.data.data.map(mapBackendClientToFrontend);
       const pagination = {
@@ -146,7 +146,7 @@ export const clientesService = {
         lastPage: response.data.last_page,
         total: response.data.total
       };
-  
+
       return {
         data: clients,
         pagination
@@ -183,29 +183,29 @@ export const clientesService = {
     try {
       // Construir la URL base para búsqueda
       let url = `${API_BASE_URL}/clients/search`;
-      
+
       // Agregar parámetros de consulta
       let params = new URLSearchParams();
       params.append('term', searchTerm);
       params.append('page', page.toString());
       params.append('status', statusFilter);
-      
+
       // Filtro por riesgo
       if (riskFilter && riskFilter !== 'null') {
         params.append('risk_id', riskFilter);
       }
-      
+
       // Ordenamiento
       if (sortField && sortDirection) {
         const direction = sortDirection === 'ascending' ? 'asc' : 'desc';
         params.append('sort_field', sortField);
         params.append('sort_direction', direction);
       }
-      
+
       url += `?${params.toString()}`;
 
       const response = await axios.get<PaginatedResponse<BackendClient>>(url);
-      
+
       // Mapear clientes y mantener la información de paginación
       const clients = response.data.data.map(mapBackendClientToFrontend);
       const pagination = {
@@ -370,7 +370,29 @@ export const clientesService = {
   async getClientRisks(clientId: string): Promise<Risk[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/clients/${clientId}/risks`);
-      return response.data.data || [];
+
+      // Si la respuesta tiene el formato { fecha_proceso, data }
+      if (response.data && response.data.data) {
+        // Mapear los datos recibidos a la estructura de Risk esperada
+        const riskData = response.data.data[0]; // Asumir que solo hay un elemento
+
+        if (riskData) {
+          // Crear un objeto que cumpla con la interfaz Risk
+          const risk: Risk = {
+            id: '0', // ID predeterminado si no hay idInstrumento
+            description: '', // Agregar un valor por defecto para la descripción requerida
+            fx: riskData.fx || 0,
+            sobo: riskData.sob || 0, // Mapear el campo sob a sobo
+            credito: riskData.credito || 0,
+            tasa: riskData.tasa || 0,
+            equity: riskData.equity || 0
+          };
+
+          return [risk]; // Devolver como array porque la función espera Risk[]
+        }
+      }
+
+      return []; // Si no hay datos válidos, devolver array vacío
     } catch (error) {
       console.error('Error al obtener riesgos del cliente:', error);
       return [];

@@ -19,24 +19,19 @@ import {
     DialogContent,
     DialogActions,
     Chip,
-    List,
     ListItem,
     ListItemText,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
     Divider,
     Grid,
-    SelectChangeEvent
+    SelectChangeEvent,
+    List
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -44,7 +39,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
-import Navbar from '../../components/Navigation/Navbar/Navbar';
 import Header from '../../components/Header/Header';
 import AsyncSelect from '../../components/AsyncSelect/AsyncSelect';
 
@@ -75,25 +69,6 @@ const fixedHeightStyles: Record<string, React.CSSProperties> = {
         overflowY: 'auto',
         padding: '16px'
     },
-    tabsPanel: {
-        height: 'calc(100% - 20px)',
-        overflowY: 'auto'
-    },
-    formCard: {
-        display: 'flex',
-        flexDirection: 'column',
-        height: 'calc(100% - 180px)'
-    },
-    tabContent: {
-        height: 'calc(100% - 48px)',
-        overflowY: 'auto',
-        padding: '16px'
-    },
-    summaryCard: {
-        marginBottom: '24px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-    },
     listContainer: {
         maxHeight: '350px',
         overflowY: 'auto',
@@ -115,7 +90,6 @@ const ClientView: React.FC = () => {
     const [client, setClient] = useState<Client | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<number>(0);
     const [users, setUsers] = useState<{ id: string; label: string }[]>([]);
     const [strategy, setStrategy] = useState<Strategy | null>(null);
     const [isEditingStrategy, setIsEditingStrategy] = useState<boolean>(false);
@@ -160,11 +134,11 @@ const ClientView: React.FC = () => {
                 const clientData = await clientesService.getClientByCodComitente(numcomitente);
                 if (clientData) {
                     setClientNumComitente(numcomitente);
-                    const [actionsData, strategyData, risksData, allRisksData] = await Promise.all([
+                    const [actionsData, strategyData, risksData] = await Promise.all([
                         clientesService.getActionsByCodComitente(numcomitente),
                         clientesService.getStrategyByClientNumber(numcomitente),
                         clientesService.getClientRisks(numcomitente),
-                        clientesService.getAllRisks()
+                        // clientesService.getAllRisks()
                     ]);
 
                     setClient({
@@ -181,16 +155,15 @@ const ClientView: React.FC = () => {
                     }
 
                     setClientRisks(risksData || []);
-                    setAvailableRisks(allRisksData || []);
 
-                    if (risksData && risksData.length > 0) {
-                        const instruments: Record<string, Instrument[]> = {};
-                        for (const risk of risksData) {
-                            const riskInstruments = await clientesService.getRiskInstruments(risk.id);
-                            instruments[risk.id] = riskInstruments || [];
-                        }
-                        setRiskInstruments(instruments);
-                    }
+                    // if (risksData && risksData.length > 0) {
+                    //     const instruments: Record<string, Instrument[]> = {};
+                    //     for (const risk of risksData) {
+                    //         const riskInstruments = await clientesService.getRiskInstruments(risk.id);
+                    //         instruments[risk.id] = riskInstruments || [];
+                    //     }
+                    //     setRiskInstruments(instruments);
+                    // }
 
                     const usersData = await clientesService.getUsers();
                     setUsers(usersData);
@@ -320,16 +293,6 @@ const ClientView: React.FC = () => {
         }
     };
 
-    const deleteAction = async (actionId: string | number) => {
-        if (!client) return;
-        try {
-            await clientesService.deleteAction(actionId.toString());
-            setClient(prev => prev ? { ...prev, actions: (prev.actions ?? []).filter(a => a.id !== actionId) } : prev);
-        } catch (err) {
-            console.error('Error al eliminar acción:', err);
-        }
-    };
-
     const handleOpenEditAction = (action: ExtendedClientAction) => {
         console.log("Abriendo edición para acción:", action);  // Para depuración
         setActionToEdit({ ...action });  // Usar una copia para evitar referencias compartidas
@@ -387,10 +350,9 @@ const ClientView: React.FC = () => {
                 status: 'cerrado'
             };
 
-            // Modificado para enviar el ID de la acción como primer parámetro
             const result = await clientesService.updateAction(
-                actionId.toString(),  // ID de la acción como primer parámetro
-                updatedAction         // La acción a actualizar como segundo parámetro
+                actionId.toString(),
+                updatedAction
             );
 
             if (result) {
@@ -406,7 +368,6 @@ const ClientView: React.FC = () => {
             console.error('Error al cerrar la acción:', err);
         }
     };
-
 
     const handleToggleRisk = async (risk: Risk) => {
         const isAssigned = clientRisks.some(r => r.id === risk.id);
@@ -466,22 +427,6 @@ const ClientView: React.FC = () => {
             year: 'numeric',
             timeZone: 'UTC'  // Esto puede ayudar a mantener consistencia
         });
-    };
-
-    const handleSaveChanges = async () => {
-        if (!client || !client.id) return;
-        try {
-            const updatedClient = await clientesService.updateClientFull(
-                client.id,
-                client,
-                client.actions ?? []
-            );
-            if (updatedClient) {
-                setClient(updatedClient);
-            }
-        } catch (err) {
-            console.error('Error al guardar los cambios:', err);
-        }
     };
 
     const actions = client?.actions ?? [];
@@ -630,36 +575,36 @@ const ClientView: React.FC = () => {
                                 <Box display="flex" flexWrap="wrap" gap={2} justifyContent="center">
                                     <Chip
                                         icon={<SwapHorizIcon />}
-                                        label={clientRisks.some(r => r.fx === 1) ? "FX: Sí" : "FX: No"}
-                                        color={clientRisks.some(r => r.fx === 1) ? "primary" : "default"}
+                                        label={clientRisks.some(r => r.fx == 1) ? "FX: Sí" : "FX: No"}
+                                        color={clientRisks.some(r => r.fx == 1) ? "primary" : "default"}
                                         variant="outlined"
                                         sx={{ minWidth: '100px' }}
                                     />
                                     <Chip
                                         icon={<AccountBalanceIcon />}
-                                        label={clientRisks.some(r => r.sobo === 1) ? "Soberano: Sí" : "Soberano: No"}
-                                        color={clientRisks.some(r => r.sobo === 1) ? "secondary" : "default"}
+                                        label={clientRisks.some(r => r.sobo == 1) ? "Soberano: Sí" : "Soberano: No"}
+                                        color={clientRisks.some(r => r.sobo == 1) ? "secondary" : "default"}
                                         variant="outlined"
                                         sx={{ minWidth: '140px' }}
                                     />
                                     <Chip
                                         icon={<AttachMoneyIcon />}
-                                        label={clientRisks.some(r => r.credito === 1) ? "Crédito: Sí" : "Crédito: No"}
-                                        color={clientRisks.some(r => r.credito === 1) ? "info" : "default"}
+                                        label={clientRisks.some(r => r.credito == 1) ? "Crédito: Sí" : "Crédito: No"}
+                                        color={clientRisks.some(r => r.credito == 1) ? "info" : "default"}
                                         variant="outlined"
                                         sx={{ minWidth: '120px' }}
                                     />
                                     <Chip
                                         icon={<ShowChartIcon />}
-                                        label={clientRisks.some(r => r.tasa === 1) ? "Tasa: Sí" : "Tasa: No"}
-                                        color={clientRisks.some(r => r.tasa === 1) ? "success" : "default"}
+                                        label={clientRisks.some(r => r.tasa == 1) ? "Tasa: Sí" : "Tasa: No"}
+                                        color={clientRisks.some(r => r.tasa == 1) ? "success" : "default"}
                                         variant="outlined"
                                         sx={{ minWidth: '100px' }}
                                     />
                                     <Chip
                                         icon={<TrendingUpIcon />}
-                                        label={clientRisks.some(r => r.equity === 1) ? "Equity: Sí" : "Equity: No"}
-                                        color={clientRisks.some(r => r.equity === 1) ? "warning" : "default"}
+                                        label={clientRisks.some(r => r.equity == 1) ? "Equity: Sí" : "Equity: No"}
+                                        color={clientRisks.some(r => r.equity == 1) ? "warning" : "default"}
                                         variant="outlined"
                                         sx={{ minWidth: '120px' }}
                                     />
@@ -671,7 +616,6 @@ const ClientView: React.FC = () => {
             </Paper>
         );
     };
-
     return (
         <div style={fixedHeightStyles.pageContainer}>
             <div style={fixedHeightStyles.headerContainer}>
@@ -802,9 +746,6 @@ const ClientView: React.FC = () => {
                                                             <IconButton size="small" onClick={() => handleOpenEditAction(action as ExtendedClientAction)}>
                                                                 <EditIcon fontSize="small" />
                                                             </IconButton>
-                                                            {/* <IconButton size="small" color="error" onClick={() => deleteAction(String(action.id))}>
-                                                                <DeleteIcon fontSize="small" />
-                                                            </IconButton> */}
                                                         </Box>
                                                     </Box>
                                                 </Box>

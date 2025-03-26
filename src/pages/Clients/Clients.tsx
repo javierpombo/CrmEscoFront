@@ -253,9 +253,39 @@ const ClientsDashboard: React.FC = () => {
     field: string;
     render?: (row: any) => React.ReactNode;
   }> = [
-      { label: 'Nombre', field: 'nombre' },
-      { label: 'Oficial', field: 'oficial' },
-      { label: 'Referente', field: 'referente' },
+      {
+        label: (
+          <div className={styles.sortableHeader}>
+            Nombre
+            <IconButton size="small" onClick={() => requestSort('nombre')}>
+              {getSortIcon('nombre')}
+            </IconButton>
+          </div>
+        ),
+        field: 'nombre'
+      },
+      {
+        label: (
+          <div className={styles.sortableHeader}>
+            Oficial
+            <IconButton size="small" onClick={() => requestSort('oficial')}>
+              {getSortIcon('oficial')}
+            </IconButton>
+          </div>
+        ),
+        field: 'oficial'
+      },
+      {
+        label: (
+          <div className={styles.sortableHeader}>
+            Referente
+            <IconButton size="small" onClick={() => requestSort('referente')}>
+              {getSortIcon('referente')}
+            </IconButton>
+          </div>
+        ),
+        field: 'referente'
+      },
       { label: 'Número Comitente', field: 'Numero' },
       ...riskColumns,
       {
