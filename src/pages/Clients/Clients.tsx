@@ -72,11 +72,11 @@ const ClientsDashboard: React.FC = () => {
   const [availableRisks, setAvailableRisks] = useState<Array<{ id: string; name: string }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [sortByDueDate, setSortByDueDate] = useState<'ascending' | 'descending' | null>(null);
-  const [fxRiskFilter, setFxRiskFilter] = useState<number>(2);
-  const [sobRiskFilter, setSobRiskFilter] = useState<number>(2);
-  const [creditoRiskFilter, setCreditoRiskFilter] = useState<number>(2);
-  const [tasaRiskFilter, setTasaRiskFilter] = useState<number>(2);
-  const [equityRiskFilter, setEquityRiskFilter] = useState<number>(2);
+  const [fxRiskFilter, setFxRiskFilter] = useState<number | null>(null);
+  const [sobRiskFilter, setSobRiskFilter] = useState<number | null>(null);
+  const [creditoRiskFilter, setCreditoRiskFilter] = useState<number | null>(null);
+  const [tasaRiskFilter, setTasaRiskFilter] = useState<number | null>(null);
+  const [equityRiskFilter, setEquityRiskFilter] = useState<number | null>(null);
 
   // Estado para ordenamiento
   const [sortConfig, setSortConfig] = useState<{
@@ -123,11 +123,11 @@ const ClientsDashboard: React.FC = () => {
   };
   /*limpia los filtros */
   const clearAllFilters = () => {
-    setFxRiskFilter(2);
-    setSobRiskFilter(2);
-    setCreditoRiskFilter(2);
-    setTasaRiskFilter(2);
-    setEquityRiskFilter(2);
+    setFxRiskFilter(null);
+    setSobRiskFilter(null);
+    setCreditoRiskFilter(null);
+    setTasaRiskFilter(null);
+    setEquityRiskFilter(null);
     setSearchTerm('');
     setCurrentPage(1);
   };
@@ -139,15 +139,15 @@ const ClientsDashboard: React.FC = () => {
         <div className={styles.sortableHeader}>
           FX
           <IconButton size="small" onClick={() => handleRiskFilterToggle('fx')}>
-            {fxRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+            {fxRiskFilter === 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              fxRiskFilter === 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
       field: 'fx',
       render: (row: any) => (
-        // Manejar el valor como número en lugar de string
-        parseInt(row.fx) == 1
+        parseInt(row.fx) === 1
           ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
           : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
       )
@@ -157,14 +157,15 @@ const ClientsDashboard: React.FC = () => {
         <div className={styles.sortableHeader}>
           Sob
           <IconButton size="small" onClick={() => handleRiskFilterToggle('sob')}>
-            {sobRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+            {sobRiskFilter === 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              sobRiskFilter === 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
       field: 'sob',
       render: (row: any) => (
-        parseInt(row.sob) == 1
+        parseInt(row.sob) === 1
           ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
           : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
       )
@@ -174,14 +175,15 @@ const ClientsDashboard: React.FC = () => {
         <div className={styles.sortableHeader}>
           Credito
           <IconButton size="small" onClick={() => handleRiskFilterToggle('credito')}>
-            {creditoRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+            {creditoRiskFilter === 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              creditoRiskFilter === 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
       field: 'credito',
       render: (row: any) => (
-        parseInt(row.credito) == 1
+        parseInt(row.credito) === 1
           ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
           : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
       )
@@ -191,14 +193,15 @@ const ClientsDashboard: React.FC = () => {
         <div className={styles.sortableHeader}>
           Tasa
           <IconButton size="small" onClick={() => handleRiskFilterToggle('tasa')}>
-            {tasaRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+            {tasaRiskFilter === 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              tasaRiskFilter === 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
       field: 'tasa',
       render: (row: any) => (
-        parseInt(row.tasa) == 1
+        parseInt(row.tasa) === 1
           ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
           : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
       )
@@ -208,14 +211,15 @@ const ClientsDashboard: React.FC = () => {
         <div className={styles.sortableHeader}>
           Equity
           <IconButton size="small" onClick={() => handleRiskFilterToggle('equity')}>
-            {equityRiskFilter == 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
-              <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
+            {equityRiskFilter === 1 ? <CheckBoxIcon fontSize="small" color="primary" /> :
+              equityRiskFilter === 0 ? <CheckBoxOutlineBlankIcon fontSize="small" color="error" /> :
+                <IndeterminateCheckBoxIcon fontSize="small" color="action" />}
           </IconButton>
         </div>
       ),
       field: 'equity',
       render: (row: any) => (
-        parseInt(row.equity) == 1
+        parseInt(row.equity) === 1
           ? <span className={`${styles.sectorPill} ${styles.colorGreen}`}>Sí</span>
           : <span className={`${styles.sectorPill} ${styles.colorRed}`}>No</span>
       )
@@ -226,19 +230,19 @@ const ClientsDashboard: React.FC = () => {
   const handleRiskFilterToggle = (riskType: string) => {
     switch (riskType) {
       case 'fx':
-        setFxRiskFilter(prev => prev == null || prev == 2 ? 1 : prev === 1 ? 0 : 2);
+        setFxRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
         break;
       case 'sob':
-        setSobRiskFilter(prev => prev == null || prev == 2 ? 1 : prev == 1 ? 0 : 2);
+        setSobRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
         break;
       case 'credito':
-        setCreditoRiskFilter(prev => prev == null || prev == 2 ? 1 : prev === 1 ? 0 : 2);
+        setCreditoRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
         break;
       case 'tasa':
-        setTasaRiskFilter(prev => prev == null || prev == 2 ? 1 : prev == 1 ? 0 : 2);
+        setTasaRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
         break;
       case 'equity':
-        setEquityRiskFilter(prev => prev == null || prev == 2 ? 1 : prev == 1 ? 0 : 2);
+        setEquityRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
         break;
     }
     setCurrentPage(1);
@@ -313,12 +317,13 @@ const ClientsDashboard: React.FC = () => {
 
     try {
       // Construir los parámetros de consulta basados en los filtros de riesgo
+      // Construir los parámetros de consulta basados en los filtros de riesgo
       const riskParams: any = {};
-      if (fxRiskFilter !== 2) riskParams.fx = fxRiskFilter;
-      if (sobRiskFilter !== 2) riskParams.sob = sobRiskFilter;
-      if (creditoRiskFilter !== 2) riskParams.credito = creditoRiskFilter;
-      if (tasaRiskFilter !== 2) riskParams.tasa = tasaRiskFilter;
-      if (equityRiskFilter !== 2) riskParams.equity = equityRiskFilter;
+      if (fxRiskFilter !== null) riskParams.fx = fxRiskFilter;
+      if (sobRiskFilter !== null) riskParams.sob = sobRiskFilter;
+      if (creditoRiskFilter !== null) riskParams.credito = creditoRiskFilter;
+      if (tasaRiskFilter !== null) riskParams.tasa = tasaRiskFilter;
+      if (equityRiskFilter !== null) riskParams.equity = equityRiskFilter;
 
       // Añadir el término de búsqueda como un parámetro adicional
       riskParams.search_term = debouncedSearchTerm;
@@ -351,12 +356,13 @@ const ClientsDashboard: React.FC = () => {
         setError(null);
         try {
           // Construir los parámetros de consulta basados en los filtros de riesgo
+          // Construir los parámetros de consulta basados en los filtros de riesgo
           const riskParams: any = {};
-          if (fxRiskFilter !== 2) riskParams.fx = fxRiskFilter;
-          if (sobRiskFilter !== 2) riskParams.sob = sobRiskFilter;
-          if (creditoRiskFilter !== 2) riskParams.credito = creditoRiskFilter;
-          if (tasaRiskFilter !== 2) riskParams.tasa = tasaRiskFilter;
-          if (equityRiskFilter !== 2) riskParams.equity = equityRiskFilter;
+          if (fxRiskFilter !== null) riskParams.fx = fxRiskFilter;
+          if (sobRiskFilter !== null) riskParams.sob = sobRiskFilter;
+          if (creditoRiskFilter !== null) riskParams.credito = creditoRiskFilter;
+          if (tasaRiskFilter !== null) riskParams.tasa = tasaRiskFilter;
+          if (equityRiskFilter !== null) riskParams.equity = equityRiskFilter;
 
           const result = await getClients(
             currentPage,
