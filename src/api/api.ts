@@ -60,6 +60,8 @@ interface BackendAction {
   action_date: string | null;
   description: string | null;
   next_contact: string | null;
+  status: string;
+  user_id: string;
 }
 
 interface PaginatedResponse<T> {
@@ -114,7 +116,8 @@ function mapBackendProspectToFrontend(prospect: BackendProspect): Prospecto {
       .join(', '),
     // Asigna los objetos completos de usuario:
     officialUser: prospect.official_user,
-    referentUser: prospect.referent_user
+    referentUser: prospect.referent_user,
+    actions: prospect.actions || []
   };
 }
 

@@ -10,7 +10,7 @@ export interface AccionType {
   description: string | null;
   next_contact: string | null;
   user_id: string;
-  status?: 'abierto' | 'cerrado' | 'vencido'; // Nuevo campo para estado
+  status?: string; 
 }
 
 export interface Prospecto {

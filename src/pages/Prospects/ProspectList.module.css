@@ -281,6 +281,11 @@
     border-bottom: none;
 }
 
+/* Estilos para la fila de cliente */
+.clientRow {
+    background-color: #f5f5f5 !important;
+  }
+
 /*******************************
  * FOOTER Y PAGINACIÓN
  *******************************/

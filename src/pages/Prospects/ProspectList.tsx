@@ -260,7 +260,40 @@ const ProspectList: React.FC = () => {
       label: 'Acción Pendiente',
       field: 'tipoAccion',
       render: (row: Prospecto) => {
-        if (row.tipoAccion) {
+        if (row.actions && row.actions.length > 0) {
+          const lastAction = row.actions[0];
+
+          // Verificar si la acción tiene un estado
+          if (lastAction.status) {
+            let statusClass;
+            let statusText;
+
+            // Evitamos el error de tipo tratando status como string
+            const status = String(lastAction.status);
+
+            switch (status) {
+              case 'abierto':
+                statusClass = styles.colorOrange;
+                statusText = 'Abierto';
+                break;
+              case 'cerrado':
+                statusClass = styles.colorGreen;
+                statusText = 'Cerrado';
+                break;
+              case 'vencido':
+                statusClass = styles.colorRed;
+                statusText = 'Vencido';
+                break;
+              default:
+                statusClass = styles.colorGray;
+                statusText = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+            return (
+              <span className={`${styles.sectorPill} ${statusClass}`} title={lastAction.description || ''}>
+                {statusText}
+              </span>
+            );
+          }
           return <span className={`${styles.sectorPill} ${styles.colorOrange}`}>Pendiente</span>;
         }
         return <span className={`${styles.sectorPill} ${styles.colorRed}`}>Sin Acción</span>;
