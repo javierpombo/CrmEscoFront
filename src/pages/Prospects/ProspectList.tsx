@@ -76,7 +76,6 @@ const ProspectList: React.FC = () => {
     return user ? user.name : '-';
   };
 
-
   // Función para obtener prospectos
   const fetchProspectos = async () => {
     setIsLoading(true);
@@ -231,17 +230,61 @@ const ProspectList: React.FC = () => {
 
   // Definición de columnas para la tabla
   const prospectColumns = [
-    { label: 'Nombre', field: 'nombreCliente' },
-    { label: 'Contacto en el cliente', field: 'contacto' },
-    { label: 'Cargo del contacto', field: 'cargo_contacto' },
     {
-      label: 'Oficial',
+      label: (
+        <div className={styles.sortableHeader}>
+          Nombre
+          <IconButton size="small" onClick={() => requestSort('nombreCliente')}>
+            {getSortIcon('nombreCliente')}
+          </IconButton>
+        </div>
+      ),
+      field: 'nombreCliente'
+    },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Contacto en el cliente
+          <IconButton size="small" onClick={() => requestSort('contacto')}>
+            {getSortIcon('contacto')}
+          </IconButton>
+        </div>
+      ),
+      field: 'contacto'
+    },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Cargo del contacto
+          <IconButton size="small" onClick={() => requestSort('cargo_contacto')}>
+            {getSortIcon('cargo_contacto')}
+          </IconButton>
+        </div>
+      ),
+      field: 'cargo_contacto'
+    },
+    {
+      label: (
+        <div className={styles.sortableHeader}>
+          Oficial
+          <IconButton size="small" onClick={() => requestSort('officialUser')}>
+            {getSortIcon('officialUser')}
+          </IconButton>
+        </div>
+      ),
       field: 'officialUser',
       render: (row: Prospecto) => renderUserData(row.officialUser)
     },
     {
-      label: 'Referente',
-      field: 'referentUser',
+      label: (
+        <div className={styles.sortableHeader}>
+          Referente
+          <IconButton size="small" onClick={() => requestSort('referentUser')}>
+            {getSortIcon('referentUser')}
+          </IconButton>
+        </div>
+      ),
+      field: 'Referente',
       render: (row: Prospecto) => renderUserData(row.referentUser)
     },
     { label: 'Último Contacto', field: 'ultimoContacto' },

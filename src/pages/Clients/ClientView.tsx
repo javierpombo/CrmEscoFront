@@ -564,11 +564,9 @@ const ClientView: React.FC = () => {
                 <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                         <Typography variant="subtitle1" fontWeight="medium">
-                            Perfil de Riesgo
+                            Exposición a riesgo
                         </Typography>
                     </Box>
-                    <Divider sx={{ mb: 2 }} />
-
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
                             <Paper elevation={1} sx={{ p: 2, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
