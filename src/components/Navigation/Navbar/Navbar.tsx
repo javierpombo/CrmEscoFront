@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import styles from './Navbar.module.css';
 
 // Ajusta la ruta a tu JSON real
-import navbarData from '../../../data/navbarData.json';
+import navbarData from '../../../data/menu';
 
 // Importa el componente que maneja ítems (submenús)
 import NavbarButton, { NavItem } from '../NavbarButton/NavbarButton';

@@ -6,6 +6,8 @@ services:
     ports:
       - "${PORT_FRONT}:443"
       - "${PORT_FRONT_ALTERNATIVO}:80"
+    env_file:
+      - .env
     networks:
       - crm
     depends_on:
