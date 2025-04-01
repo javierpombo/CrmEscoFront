@@ -18,7 +18,7 @@ import { ProspectForm } from '../../components/Forms/ProspectForm/ProspectForm';
 
 // Servicios y tipos
 import { prospectoService } from '../../api/api';
-import { Prospecto } from '../../types/Prospecto';
+import { Prospecto, AccionType } from '../../types/Prospecto';
 
 // Estilos
 import styles from './ProspectList.module.css';
@@ -228,6 +228,25 @@ const ProspectList: React.FC = () => {
     return <SwapVertIcon fontSize="small" />;
   };
 
+  const findOldestVencidaAction = (actions: AccionType[]): AccionType | null => {
+    if (!actions || actions.length === 0) return null;
+
+    // Filtrar solo acciones con status "vencido"
+    const vencidas = actions.filter(action => String(action.status) === 'vencido');
+
+    if (vencidas.length === 0) return null;
+
+    // Si hay una sola acción vencida, devolverla directamente
+    if (vencidas.length === 1) return vencidas[0];
+
+    // Si hay múltiples, ordenar por fecha (más antigua primero)
+    return vencidas.sort((a, b) => {
+      const dateA = a.next_contact ? new Date(a.next_contact).getTime() : 0;
+      const dateB = b.next_contact ? new Date(b.next_contact).getTime() : 0;
+      return dateA - dateB; // Orden ascendente
+    })[0];
+  };
+
   // Definición de columnas para la tabla
   const prospectColumns = [
     {
@@ -297,21 +316,58 @@ const ProspectList: React.FC = () => {
           </IconButton>
         </div>
       ),
-      field: 'fechaVencimiento'
+      field: 'fechaVencimiento',
+      render: (row: Prospecto) => {
+        // Buscar acción vencida más antigua
+        if (row.actions && row.actions.length > 0) {
+          const vencidaAction = findOldestVencidaAction(row.actions);
+
+          if (vencidaAction && vencidaAction.next_contact) {
+            const [year, month, day] = vencidaAction.next_contact.split('T')[0].split('-');
+            const formattedDate = `${day}/${month}/${year}`;
+
+            return formattedDate;
+          } else {
+            // Si no hay acción vencida, mostrar la última acción (más reciente)
+            const lastAction = row.actions[0];
+            if (lastAction && lastAction.next_contact) {
+              const [year, month, day] = lastAction.next_contact.split('T')[0].split('-');
+              const dueDate = new Date(Number(year), Number(month) - 1, Number(day)); // Local date sin timezone
+
+              const today = new Date();
+              const isOverdue = dueDate < today;
+              const dateClassName = isOverdue ? styles.colorRed : '';
+
+              const formattedDate = `${day}/${month}/${year}`;
+
+              return formattedDate;
+            }
+          }
+        }
+        return '-';
+      }
     },
     {
       label: 'Acción Pendiente',
       field: 'tipoAccion',
       render: (row: Prospecto) => {
         if (row.actions && row.actions.length > 0) {
+          // Buscar acción vencida más antigua
+          const vencidaAction = findOldestVencidaAction(row.actions);
+
+          if (vencidaAction) {
+            // Si hay acción vencida, mostrarla
+            return (
+              <span className={`${styles.sectorPill} ${styles.colorRed}`} title={vencidaAction.description || ''}>
+                Vencido
+              </span>
+            );
+          }
           const lastAction = row.actions[0];
 
-          // Verificar si la acción tiene un estado
           if (lastAction.status) {
             let statusClass;
             let statusText;
-
-            // Evitamos el error de tipo tratando status como string
             const status = String(lastAction.status);
 
             switch (status) {
@@ -322,10 +378,6 @@ const ProspectList: React.FC = () => {
               case 'cerrado':
                 statusClass = styles.colorGreen;
                 statusText = 'Cerrado';
-                break;
-              case 'vencido':
-                statusClass = styles.colorRed;
-                statusText = 'Vencido';
                 break;
               default:
                 statusClass = styles.colorGray;
