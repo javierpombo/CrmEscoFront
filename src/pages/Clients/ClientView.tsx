@@ -24,7 +24,7 @@ import {
     Divider,
     Grid,
     SelectChangeEvent,
-    List
+    List,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -38,6 +38,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import Header from '../../components/Header/Header';
 import AsyncSelect from '../../components/AsyncSelect/AsyncSelect';
@@ -97,6 +98,7 @@ const ClientView: React.FC = () => {
         strategy: '',
         description: ''
     });
+    const [deleteStrategyDialogOpen, setDeleteStrategyDialogOpen] = useState<boolean>(false);
 
     // Estados para acciones
     const [newAction, setNewAction] = useState<ExtendedClientAction>({
@@ -192,6 +194,31 @@ const ClientView: React.FC = () => {
 
     const handleEditStrategy = () => {
         setIsEditingStrategy(true);
+    };
+
+    const handleOpenDeleteStrategy = () => {
+        // Eliminar inmediatamente en lugar de mostrar el diálogo
+        if (strategy?.id) {
+            handleDeleteStrategy();
+        }
+    };
+
+    const handleDeleteStrategy = async () => {
+        if (!strategy?.id) return;
+    
+        try {
+            // Enviar petición al servidor para eliminar la estrategia
+            const response = await clientesService.deleteStrategy(strategy.id);
+    
+            // Actualizar el estado para reflejar que la estrategia se ha eliminado
+            setStrategy(null);
+            setStrategyForm({
+                strategy: '',
+                description: ''
+            });
+        } catch (err) {
+            console.error('Error al eliminar la estrategia:', err);
+        }
     };
 
     const handleCancelEditStrategy = () => {
@@ -475,14 +502,27 @@ const ClientView: React.FC = () => {
                                 Estrategia
                             </Typography>
                             {!isEditingStrategy ? (
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={strategy ? <EditIcon /> : <AddIcon />}
-                                    onClick={handleEditStrategy}
-                                >
-                                    {strategy ? 'Editar' : 'Agregar'}
-                                </Button>
+                                <Box display="flex" gap={1}>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={strategy ? <EditIcon /> : <AddIcon />}
+                                        onClick={handleEditStrategy}
+                                    >
+                                        {strategy ? 'Editar' : 'Agregar'}
+                                    </Button>
+                                    {strategy && (
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            color="error"
+                                            startIcon={<DeleteIcon />}
+                                            onClick={handleOpenDeleteStrategy}
+                                        >
+                                            Eliminar
+                                        </Button>
+                                    )}
+                                </Box>
                             ) : (
                                 <Box display="flex" gap={1}>
                                     <Button
@@ -504,6 +544,7 @@ const ClientView: React.FC = () => {
                                     </Button>
                                 </Box>
                             )}
+
                         </Box>
                         <Divider sx={{ mb: 2 }} />
                         {isEditingStrategy ? (

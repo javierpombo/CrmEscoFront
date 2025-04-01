@@ -366,6 +366,16 @@ export const clientesService = {
     }
   },
 
+  async deleteStrategy(id: string | number): Promise<boolean> {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/clients/strategies/${id}`);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error al eliminar estrategia del cliente:', error);
+      throw error;
+    }
+  },
+
   // Obtener riesgos de un cliente
   async getClientRisks(clientId: string): Promise<Risk[]> {
     try {
