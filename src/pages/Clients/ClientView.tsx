@@ -205,11 +205,11 @@ const ClientView: React.FC = () => {
 
     const handleDeleteStrategy = async () => {
         if (!strategy?.id) return;
-    
+
         try {
             // Enviar petición al servidor para eliminar la estrategia
             const response = await clientesService.deleteStrategy(strategy.id);
-    
+
             // Actualizar el estado para reflejar que la estrategia se ha eliminado
             setStrategy(null);
             setStrategyForm({
@@ -877,142 +877,121 @@ const ClientView: React.FC = () => {
             </div>
 
             {/* Modal para editar acción */}
-            <Dialog open={editActionDialogOpen} onClose={handleCloseEditAction}>
-                <DialogTitle>Editar Acción</DialogTitle>
+            <Dialog
+                open={editActionDialogOpen}
+                onClose={handleCloseEditAction}
+                fullWidth
+                maxWidth="md"
+            >
+                <DialogTitle>{actionToEdit?.status === 'cerrado' ? 'Ver Acción' : 'Editar Acción'}</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, mt: 1 }}>
-                        <TextField
-                            label="Fecha"
-                            name="action_date"
-                            type="date"
-                            value={actionToEdit?.action_date || ''}
-                            onChange={handleEditActionChange}
-                            margin="dense"
-                            required
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ flex: 1 }}
-                        />
-                        <TextField
-                            label="Vencimiento"
-                            name="next_contact"
-                            type="date"
-                            value={actionToEdit?.next_contact || ''}
-                            onChange={handleEditActionChange}
-                            margin="dense"
-                            required
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ flex: 1 }}
-                        />
-                    </Box>
-                    <FormControl fullWidth margin="dense" required>
-                        <InputLabel id="action-status-label">Estado</InputLabel>
-                        <Select
-                            labelId="action-status-label"
-                            name="status"
-                            value={actionToEdit?.status || 'abierto'}
-                            onChange={handleEditActionChange}
-                            label="Estado"
-                        >
-                            <MenuItem value="abierto">Abierto</MenuItem>
-                            <MenuItem value="vencido">Vencido</MenuItem>
-                            <MenuItem value="cerrado">Cerrado</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl fullWidth margin="dense" required>
-                        <AsyncSelect
-                            label="Asignado"
-                            placeholder="Seleccione un asignado"
-                            value={actionToEdit?.user_id || ''}
-                            onChange={(newValue) =>
-                                setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
-                            }
-                            fetchOptions={clientesService.getUsers}
-                            required
-                        />
-                    </FormControl>
-                    <TextField
-                        label="Descripción"
-                        name="description"
-                        value={actionToEdit?.description || ''}
-                        onChange={handleEditActionChange}
-                        fullWidth
-                        margin="dense"
-                        multiline
-                        rows={3}
-                        required
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseEditAction}>Cancelar</Button>
-                    <Button
-                        onClick={handleSaveEditedAction}
-                        variant="contained"
-                        color="primary"
-                        disabled={!actionToEdit?.action_date || !actionToEdit?.description || !actionToEdit?.next_contact || !actionToEdit?.user_id}
-                    >
-                        Guardar
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Modal para gestionar riesgos */}
-            <Dialog open={riskDialogOpen} onClose={handleCloseRiskDialog} maxWidth="md" fullWidth>
-                <DialogTitle>Gestionar Riesgos del Cliente</DialogTitle>
-                <DialogContent>
-                    <Typography variant="body2" color="textSecondary" paragraph>
-                        Seleccione los riesgos aplicables al cliente. Cada riesgo puede tener diferentes categorías (FX, Soberano, Crédito, etc.) e instrumentos asociados.
-                    </Typography>
-
-                    <List>
-                        {availableRisks.map(risk => {
-                            const isAssigned = clientRisks.some(r => r.id === risk.id);
-                            return (
-                                <ListItem
-                                    key={risk.id}
-                                    secondaryAction={
-                                        <Button
-                                            variant={isAssigned ? "contained" : "outlined"}
-                                            color={isAssigned ? "primary" : "inherit"}
-                                            onClick={() => handleToggleRisk(risk)}
-                                            size="small"
-                                        >
-                                            {isAssigned ? "Quitar" : "Asignar"}
-                                        </Button>
-                                    }
-                                    sx={{
-                                        borderBottom: '1px solid #e0e0e0',
-                                        bgcolor: isAssigned ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
-                                        borderRadius: '4px',
-                                        mb: 1
-                                    }}
+                    {actionToEdit?.status === 'cerrado' ? (
+                        // Modo solo lectura para acciones cerradas
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minHeight: '350px', padding: '8px 0' }}>
+                            <Box>
+                                <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 500 }}>Fecha:</Typography>
+                                <Typography variant="body1" sx={{ padding: '8px 0' }}>{formatDate(actionToEdit.action_date)}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 500 }}>Vencimiento:</Typography>
+                                <Typography variant="body1" sx={{ padding: '8px 0' }}>{formatDate(actionToEdit.next_contact)}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 500 }}>Estado:</Typography>
+                                <Typography variant="body1" sx={{ padding: '8px 0' }}>Cerrado</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 500 }}>Asignado:</Typography>
+                                <Typography variant="body1" sx={{ padding: '8px 0' }}>
+                                    {users.find(u => u.id === actionToEdit.user_id)?.label || actionToEdit.user_id}
+                                </Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 500 }}>Descripción:</Typography>
+                                <Typography variant="body1" sx={{ padding: '8px 0' }}>{actionToEdit.description}</Typography>
+                            </Box>
+                        </Box>
+                    ) : (
+                        // Modo edición normal para acciones no cerradas
+                        <>
+                            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2, mt: 1 }}>
+                                <TextField
+                                    label="Fecha"
+                                    name="action_date"
+                                    type="date"
+                                    value={actionToEdit?.action_date || ''}
+                                    onChange={handleEditActionChange}
+                                    margin="dense"
+                                    required
+                                    InputLabelProps={{ shrink: true }}
+                                    sx={{ flex: 1 }}
+                                />
+                                <TextField
+                                    label="Vencimiento"
+                                    name="next_contact"
+                                    type="date"
+                                    value={actionToEdit?.next_contact || ''}
+                                    onChange={handleEditActionChange}
+                                    margin="dense"
+                                    required
+                                    InputLabelProps={{ shrink: true }}
+                                    sx={{ flex: 1 }}
+                                />
+                            </Box>
+                            <FormControl fullWidth margin="dense" required>
+                                <InputLabel id="action-status-label">Estado</InputLabel>
+                                <Select
+                                    labelId="action-status-label"
+                                    name="status"
+                                    value={actionToEdit?.status || 'abierto'}
+                                    onChange={handleEditActionChange}
+                                    label="Estado"
                                 >
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                        <ListItemText
-                                            primary={
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <SecurityIcon sx={{ mr: 1, color: 'primary.main' }} fontSize="small" />
-                                                    <Typography variant="subtitle2">{risk.description}</Typography>
-                                                </Box>
-                                            }
-                                            secondary={renderRiskIcons(risk)}
-                                        />
-                                        {isAssigned && riskInstruments[risk.id]?.length > 0 && (
-                                            <Box sx={{ mt: 1, ml: 4 }}>
-                                                <Typography variant="caption" color="textSecondary">
-                                                    Instrumentos: {riskInstruments[risk.id].map(i => i.abbreviation).join(', ')}
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                </ListItem>
-                            );
-                        })}
-                    </List>
+                                    <MenuItem value="abierto">Abierto</MenuItem>
+                                    <MenuItem value="vencido">Vencido</MenuItem>
+                                    <MenuItem value="cerrado">Cerrado</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <FormControl fullWidth margin="dense" required>
+                                <AsyncSelect
+                                    label="Asignado"
+                                    placeholder="Seleccione un asignado"
+                                    value={actionToEdit?.user_id || ''}
+                                    onChange={(newValue) =>
+                                        setActionToEdit(prev => prev ? { ...prev, user_id: newValue } : prev)
+                                    }
+                                    fetchOptions={clientesService.getUsers}
+                                    required
+                                />
+                            </FormControl>
+                            <TextField
+                                label="Descripción"
+                                name="description"
+                                value={actionToEdit?.description || ''}
+                                onChange={handleEditActionChange}
+                                fullWidth
+                                margin="dense"
+                                multiline
+                                rows={3}
+                                required
+                            />
+                        </>
+                    )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseRiskDialog} variant="contained">
-                        Cerrar
+                    <Button onClick={handleCloseEditAction}>
+                        {actionToEdit?.status === 'cerrado' ? 'Cerrar' : 'Cancelar'}
                     </Button>
+                    {actionToEdit?.status !== 'cerrado' && (
+                        <Button
+                            onClick={handleSaveEditedAction}
+                            variant="contained"
+                            color="primary"
+                            disabled={!actionToEdit?.action_date || !actionToEdit?.description || !actionToEdit?.next_contact || !actionToEdit?.user_id}
+                        >
+                            Guardar
+                        </Button>
+                    )}
                 </DialogActions>
             </Dialog>
         </div>
