@@ -115,8 +115,8 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: var(--padding-sm) var(--padding-sm); 
-  gap: var(--gap-xs); 
+  padding: var(--padding-sm) var(--padding-sm);
+  gap: var(--gap-xs);
   width: 100%;
   background-color: #fff;
 }
@@ -135,7 +135,7 @@
   margin: 0 0 8px 0 !important;
   align-self: stretch;
   position: relative;
-  font-size: 22px !important; 
+  font-size: 22px !important;
   font-weight: 700 !important;
   line-height: 28px !important;
   color: var(--neutral-neutral-1000);
@@ -216,7 +216,7 @@
   font-weight: 600;
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid var(--neutral-neutral-200); 
+  border-bottom: 1px solid var(--neutral-neutral-200);
   white-space: nowrap;
 }
 
@@ -333,15 +333,40 @@
 }
 
 /* Para los valores "No" (verde) */
+
+.colorBlue {
+  background-color: rgba(8, 133, 230, 0.1);
+  color: #0885e6;
+}
+
+.colorOrange {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #FF9800;
+}
+
+.colorRed {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
 .colorGreen {
   background-color: rgba(76, 175, 80, 0.1);
   color: #4CAF50;
 }
 
-/* Para los valores "Sí" (rojo) */
-.colorRed {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: #F44336;
+.colorPendingVencido {
+  background-color: rgba(106, 27, 154, 0.1);
+  color: #723597;
+}
+
+.colorPendingAbierto {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #FF9800;
+}
+
+.colorPendingCerrado {
+  background-color: rgba(2, 192, 170, 0.1);
+  color: #03ad9a;
 }
 
 /* Media Queries */
@@ -393,11 +418,11 @@
     font-size: 20px !important;
     line-height: 20px !important;
   }
-  
+
   .tableHeaderTabs {
     padding: var(--padding-sm) var(--padding-sm);
   }
-  
+
   .tableHeaderTabs :global(th),
   .tableHeaderTabs :global(td) {
     padding: 10px 12px;

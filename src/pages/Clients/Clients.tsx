@@ -4,6 +4,8 @@ import Header from '../../components/Header/Header';
 import Navbar from '../../components/Navigation/Navbar/Navbar';
 import Table from '../../components/Table/Table';
 import FilterDropdown, { FilterOption } from '../../components/FilterDropdown/FilterDropdown';
+import ImprovedDateRangePicker from './../../components/ImprovedDateRangePicker/ImprovedDateRangePicker';
+import ActiveFilterChips, { FilterItem } from './../../components/ActiveFilterChips/ActiveFilterChips';
 import Pagination from '../../components/Pagination/Pagination';
 import { Typography, TextField, IconButton, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +17,7 @@ import SwapVertIcon from '@mui/icons-material/SwapVert';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
+import { format, parseISO } from 'date-fns';
 
 // Interfaz actualizada para incluir riesgos y fecha de vencimiento
 interface ClientDashboard {
@@ -32,6 +35,7 @@ interface ClientDashboard {
   credito?: string;
   tasa?: string;
   equity?: string;
+  estadoAccion?: string;
 }
 
 // Interfaz para las columnas de la tabla
@@ -78,6 +82,11 @@ const ClientsDashboard: React.FC = () => {
   const [tasaRiskFilter, setTasaRiskFilter] = useState<number | null>(null);
   const [equityRiskFilter, setEquityRiskFilter] = useState<number | null>(null);
 
+  // filtros añadidos
+  const [actionStateFilter, setActionStateFilter] = useState<'todos' | 'vencido' | 'cerrado' | 'abierto'>('todos');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
   // Estado para ordenamiento
   const [sortConfig, setSortConfig] = useState<{
     key: string | null;
@@ -91,6 +100,43 @@ const ClientsDashboard: React.FC = () => {
 
   // Aplicar debounce al término de búsqueda
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  //Opciones para el filtro anidado
+  const filterNestedOptions: FilterOption[] = [
+    {
+      id: 'clients',
+      name: 'Clientes',
+      icon: '/search.svg',
+      children: [
+        { id: 'todos', name: 'Todos' },
+        { id: 'activos', name: 'Activos' },
+        { id: 'inactivos', name: 'Inactivos' }
+      ]
+    },
+    {
+      id: 'actions',
+      name: 'Acciones',
+      icon: '/search.svg',
+      children: [
+        { id: 'todos', name: 'Todas' },
+        { id: 'abierto', name: 'Abiertas' },
+        { id: 'vencido', name: 'Vencidas' },
+        { id: 'cerrado', name: 'Cerradas' }
+      ]
+    }
+  ];
+
+  const handleNestedFilterSelect = (filterId: string, parentId?: string) => {
+    if (parentId === 'clients') {
+      setFilterStatus(filterId as 'todos' | 'activos' | 'inactivos');
+    } else if (parentId === 'actions') {
+      setActionStateFilter(filterId as 'todos' | 'vencido' | 'cerrado' | 'abierto');
+    }
+    // No estamos buscando cuando aplicamos filtros
+    setIsSearching(false);
+    setCurrentPage(1);
+  };
+
 
   // Función para manejar el ordenamiento (igual que en ProspectList)
   const requestSort = (key: string) => {
@@ -121,8 +167,9 @@ const ClientsDashboard: React.FC = () => {
 
     return <SwapVertIcon fontSize="small" />;
   };
-  /*limpia los filtros */
+  // Limpieza de filtros
   const clearAllFilters = () => {
+    setFilterStatus('todos');
     setFxRiskFilter(null);
     setSobRiskFilter(null);
     setCreditoRiskFilter(null);
@@ -130,6 +177,184 @@ const ClientsDashboard: React.FC = () => {
     setEquityRiskFilter(null);
     setSearchTerm('');
     setCurrentPage(1);
+
+    setStartDate(null);
+    setEndDate(null);
+    setActionStateFilter('todos');
+  };
+
+  const formatDateForApi = (date: Date | null): string | null => {
+    if (!date) return null;
+    return format(date, 'yyyy-MM-dd');
+  };
+
+  const handleDateRangeChange = (start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+    // No estamos buscando cuando aplicamos filtros de fecha
+    setIsSearching(false);
+    setCurrentPage(1);
+  };
+
+  const handleRiskFilterToggle = (riskType: string) => {
+    switch (riskType) {
+      case 'fx':
+        setFxRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
+        break;
+      case 'sob':
+        setSobRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
+        break;
+      case 'credito':
+        setCreditoRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
+        break;
+      case 'tasa':
+        setTasaRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
+        break;
+      case 'equity':
+        setEquityRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
+        break;
+    }
+    // No estamos buscando cuando aplicamos filtros de riesgo
+    setIsSearching(false);
+    setCurrentPage(1);
+  };
+
+  // Función para manejar la eliminación de un filtro específico
+  const handleRemoveFilter = (id: string, type: string) => {
+    switch (type) {
+      case 'filterStatus':
+        setFilterStatus('todos');
+        break;
+      case 'actionStateFilter':
+        setActionStateFilter('todos');
+        break;
+      case 'dateRange':
+        setStartDate(null);
+        setEndDate(null);
+        break;
+      case 'fxRiskFilter':
+        setFxRiskFilter(null);
+        break;
+      case 'sobRiskFilter':
+        setSobRiskFilter(null);
+        break;
+      case 'creditoRiskFilter':
+        setCreditoRiskFilter(null);
+        break;
+      case 'tasaRiskFilter':
+        setTasaRiskFilter(null);
+        break;
+      case 'equityRiskFilter':
+        setEquityRiskFilter(null);
+        break;
+      case 'searchTerm':
+        setSearchTerm('');
+        break;
+      default:
+        break;
+    }
+    setCurrentPage(1);
+  };
+
+
+  // Construir la lista de filtros activos para el componente
+  const buildActiveFilters = (): FilterItem[] => {
+    const activeFilters: FilterItem[] = [];
+
+    // Filtro de estado de cliente
+    if (filterStatus !== 'todos') {
+      activeFilters.push({
+        id: filterStatus,
+        type: 'filterStatus',
+        label: filterStatus === 'activos' ? 'Clientes activos' : 'Clientes inactivos'
+      });
+    }
+
+    // Filtro de estado de acción
+    if (actionStateFilter !== 'todos') {
+      let label = '';
+      switch (actionStateFilter) {
+        case 'abierto':
+          label = 'Acciones abiertas';
+          break;
+        case 'vencido':
+          label = 'Acciones vencidas';
+          break;
+        case 'cerrado':
+          label = 'Acciones cerradas';
+          break;
+      }
+
+      activeFilters.push({
+        id: actionStateFilter,
+        type: 'actionStateFilter',
+        label
+      });
+    }
+
+    // Filtro de rango de fechas
+    if (startDate || endDate) {
+      const startFormatted = startDate ? format(startDate, 'dd/MM/yyyy') : 'inicio';
+      const endFormatted = endDate ? format(endDate, 'dd/MM/yyyy') : 'fin';
+
+      activeFilters.push({
+        id: 'dateRange',
+        type: 'dateRange',
+        label: `Fecha: ${startFormatted} - ${endFormatted}`
+      });
+    }
+
+    // Filtros de riesgo
+    if (fxRiskFilter !== null) {
+      activeFilters.push({
+        id: 'fx',
+        type: 'fxRiskFilter',
+        label: `FX: ${fxRiskFilter === 1 ? 'Sí' : 'No'}`
+      });
+    }
+
+    if (sobRiskFilter !== null) {
+      activeFilters.push({
+        id: 'sob',
+        type: 'sobRiskFilter',
+        label: `Sob: ${sobRiskFilter === 1 ? 'Sí' : 'No'}`
+      });
+    }
+
+    if (creditoRiskFilter !== null) {
+      activeFilters.push({
+        id: 'credito',
+        type: 'creditoRiskFilter',
+        label: `Crédito: ${creditoRiskFilter === 1 ? 'Sí' : 'No'}`
+      });
+    }
+
+    if (tasaRiskFilter !== null) {
+      activeFilters.push({
+        id: 'tasa',
+        type: 'tasaRiskFilter',
+        label: `Tasa: ${tasaRiskFilter === 1 ? 'Sí' : 'No'}`
+      });
+    }
+
+    if (equityRiskFilter !== null) {
+      activeFilters.push({
+        id: 'equity',
+        type: 'equityRiskFilter',
+        label: `Equity: ${equityRiskFilter === 1 ? 'Sí' : 'No'}`
+      });
+    }
+
+    // Filtro de búsqueda
+    if (searchTerm) {
+      activeFilters.push({
+        id: 'search',
+        type: 'searchTerm',
+        label: `Búsqueda: "${searchTerm}"`
+      });
+    }
+
+    return activeFilters;
   };
 
   // Modifica las columnas de riesgo para manejar valores numéricos en lugar de strings
@@ -226,26 +451,19 @@ const ClientsDashboard: React.FC = () => {
     }
   ];
 
+  const renderActionState = (row: any) => {
+    if (!row.estadoAccion) return <span>-</span>;
 
-  const handleRiskFilterToggle = (riskType: string) => {
-    switch (riskType) {
-      case 'fx':
-        setFxRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
-        break;
-      case 'sob':
-        setSobRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
-        break;
-      case 'credito':
-        setCreditoRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
-        break;
-      case 'tasa':
-        setTasaRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
-        break;
-      case 'equity':
-        setEquityRiskFilter(prev => prev === null ? 1 : prev === 1 ? 0 : null);
-        break;
+    switch (row.estadoAccion.toLowerCase()) {
+      case 'vencido':
+        return <span className={`${styles.sectorPill} ${styles.colorPendingVencido }`}>Vencido</span>;
+      case 'cerrado':
+        return <span className={`${styles.sectorPill} ${styles.colorPendingCerrado }`}>Cerrado</span>;
+      case 'abierto':
+        return <span className={`${styles.sectorPill} ${styles.colorPendingAbierto }`}>Abierto</span>;
+      default:
+        return <span>{row.estadoAccion}</span>;
     }
-    setCurrentPage(1);
   };
 
   const clientColumns: Array<{
@@ -291,6 +509,15 @@ const ClientsDashboard: React.FC = () => {
       {
         label: (
           <div className={styles.sortableHeader}>
+            Acción Pendiente
+          </div>
+        ),
+        field: 'estadoAccion',
+        render: renderActionState
+      },
+      {
+        label: (
+          <div className={styles.sortableHeader}>
             Fecha de Vencimiento
             <IconButton size="small" onClick={() => requestSort('fechaVencimiento')}>
               {getSortIcon('fechaVencimiento')}
@@ -298,31 +525,50 @@ const ClientsDashboard: React.FC = () => {
           </div>
         ),
         field: 'fechaVencimiento',
+        render: (row: any) => row.fechaVencimiento ? format(parseISO(row.fechaVencimiento), 'dd/MM/yyyy') : '-'
       },
     ];
-
-  // Opciones para el filtro de estado
-  const statusFilterOptions: FilterOption[] = [
-    { id: 'todos', name: 'Todos', icon: '/next-icon.svg' },
-    { id: 'activos', name: 'Activos', icon: '/next-icon.svg' },
-    { id: 'inactivos', name: 'Inactivos', icon: '/next-icon.svg' },
-  ];
 
   // Función para obtener clientes (usando api.ts en vez de servicios)
   const fetchClients = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Usamos la función optimizada de getClients que hace una sola petición
+      //Construir los parámetros de consulta basados en los filtros
+      const riskParams: any = {};
+      if (fxRiskFilter !== null) riskParams.fx = fxRiskFilter;
+      if (sobRiskFilter !== null) riskParams.sob = sobRiskFilter;
+      if (creditoRiskFilter !== null) riskParams.credito = creditoRiskFilter;
+      if (tasaRiskFilter !== null) riskParams.tasa = tasaRiskFilter;
+      if (equityRiskFilter !== null) riskParams.equity = equityRiskFilter;
+
+      // NUEVO: Añadir el filtro de estado de acción si no es 'todos'
+      if (actionStateFilter !== 'todos') {
+        riskParams.action_state = actionStateFilter;
+      }
+
+      // NUEVO: Añadir filtros de fecha si están establecidos
+      if (startDate) {
+        riskParams.start_date = formatDateForApi(startDate);
+      }
+      if (endDate) {
+        riskParams.end_date = formatDateForApi(endDate);
+      }
+
+      // Añadir término de búsqueda si existe
+      if (debouncedSearchTerm) {
+        riskParams.search_term = debouncedSearchTerm;
+      }
+
       const result = await getClients(
         currentPage,
         filterStatus,
         sortConfig.key || 'fechaVencimiento',
         sortConfig.direction || 'ascending',
-        filterRisk
+        filterRisk,
+        riskParams
       );
 
-      // Los datos ya vienen transformados de la API, no necesitamos procesarlos más
       setClients(result.data);
       setTotalPages(result.pagination.lastPage);
       setTotalItems(result.pagination.total);
@@ -347,13 +593,25 @@ const ClientsDashboard: React.FC = () => {
 
     try {
       // Construir los parámetros de consulta basados en los filtros de riesgo
-      // Construir los parámetros de consulta basados en los filtros de riesgo
       const riskParams: any = {};
       if (fxRiskFilter !== null) riskParams.fx = fxRiskFilter;
       if (sobRiskFilter !== null) riskParams.sob = sobRiskFilter;
       if (creditoRiskFilter !== null) riskParams.credito = creditoRiskFilter;
       if (tasaRiskFilter !== null) riskParams.tasa = tasaRiskFilter;
       if (equityRiskFilter !== null) riskParams.equity = equityRiskFilter;
+
+      // NUEVO: Añadir el filtro de estado de acción si no es 'todos'
+      if (actionStateFilter !== 'todos') {
+        riskParams.action_state = actionStateFilter;
+      }
+
+      // NUEVO: Añadir filtros de fecha si están establecidos
+      if (startDate) {
+        riskParams.start_date = formatDateForApi(startDate);
+      }
+      if (endDate) {
+        riskParams.end_date = formatDateForApi(endDate);
+      }
 
       // Añadir el término de búsqueda como un parámetro adicional
       riskParams.search_term = debouncedSearchTerm;
@@ -379,55 +637,74 @@ const ClientsDashboard: React.FC = () => {
   };
 
   // Cargar clientes cada vez que cambie la página, filtro de estado o configuración de ordenamiento
+
   useEffect(() => {
-    if (!isSearching) {
-      const fetchClientsWithRiskFilters = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          // Construir los parámetros de consulta basados en los filtros de riesgo
-          // Construir los parámetros de consulta basados en los filtros de riesgo
-          const riskParams: any = {};
-          if (fxRiskFilter !== null) riskParams.fx = fxRiskFilter;
-          if (sobRiskFilter !== null) riskParams.sob = sobRiskFilter;
-          if (creditoRiskFilter !== null) riskParams.credito = creditoRiskFilter;
-          if (tasaRiskFilter !== null) riskParams.tasa = tasaRiskFilter;
-          if (equityRiskFilter !== null) riskParams.equity = equityRiskFilter;
-
-          const result = await getClients(
-            currentPage,
-            filterStatus,
-            sortConfig.key || 'fechaVencimiento',
-            sortConfig.direction || 'ascending',
-            null,
-            riskParams
-          );
-
-          setClients(result.data);
-          setTotalPages(result.pagination.lastPage);
-          setTotalItems(result.pagination.total);
-        } catch (err) {
-          console.error('Error al cargar clientes:', err);
-          setError('Error al cargar los datos. Por favor, intenta de nuevo más tarde.');
-        } finally {
-          setIsLoading(false);
+    const fetchClientsWithRiskFilters = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Construir los parámetros de consulta basados en los filtros
+        const riskParams: any = {};
+        if (fxRiskFilter !== null) riskParams.fx = fxRiskFilter;
+        if (sobRiskFilter !== null) riskParams.sob = sobRiskFilter;
+        if (creditoRiskFilter !== null) riskParams.credito = creditoRiskFilter;
+        if (tasaRiskFilter !== null) riskParams.tasa = tasaRiskFilter;
+        if (equityRiskFilter !== null) riskParams.equity = equityRiskFilter;
+        if (actionStateFilter !== 'todos') {
+          riskParams.action_state = actionStateFilter;
         }
-      };
+        if (startDate) {
+          riskParams.start_date = formatDateForApi(startDate);
+        }
+        if (endDate) {
+          riskParams.end_date = formatDateForApi(endDate);
+        }
 
-      fetchClientsWithRiskFilters();
-    }
-  }, [currentPage, filterStatus, sortConfig, fxRiskFilter, sobRiskFilter, creditoRiskFilter, tasaRiskFilter, equityRiskFilter]);
+        // Añadir término de búsqueda si existe
+        if (debouncedSearchTerm) {
+          riskParams.search_term = debouncedSearchTerm;
+        }
 
+        const result = await getClients(
+          currentPage,
+          filterStatus,
+          sortConfig.key || 'fechaVencimiento',
+          sortConfig.direction || 'ascending',
+          null,
+          riskParams
+        );
 
-  // Efecto para buscar cuando cambia el término de búsqueda debounced
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      handleServerSearch();
-    } else if (isSearching) {
-      setIsSearching(false);
-      fetchClients();
-    }
-  }, [currentPage, filterStatus, filterRisk, sortConfig.key, sortConfig.direction, debouncedSearchTerm]);
+        setClients(result.data);
+        setTotalPages(result.pagination.lastPage);
+        setTotalItems(result.pagination.total);
+
+        // Resetear isSearching si estaba activo
+        if (isSearching) {
+          setIsSearching(false);
+        }
+      } catch (err) {
+        console.error('Error al cargar clientes:', err);
+        setError('Error al cargar los datos. Por favor, intenta de nuevo más tarde.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClientsWithRiskFilters();
+  }, [
+    currentPage,
+    filterStatus,
+    sortConfig,
+    fxRiskFilter,
+    sobRiskFilter,
+    creditoRiskFilter,
+    tasaRiskFilter,
+    equityRiskFilter,
+    actionStateFilter,
+    startDate,
+    endDate,
+    debouncedSearchTerm // Añadir el término de búsqueda debounced como dependencia
+  ]);
 
   // Cargar los riesgos disponibles al montar el componente
   useEffect(() => {
@@ -452,9 +729,34 @@ const ClientsDashboard: React.FC = () => {
   };
 
   // Función para manejar cambios en el input de búsqueda
-
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    const newSearchTerm = event.target.value;
+    setSearchTerm(newSearchTerm);
+
+    // Si hay una búsqueda nueva y ya existen filtros aplicados, eliminarlos
+    if (newSearchTerm && (
+      filterStatus !== 'todos' ||
+      actionStateFilter !== 'todos' ||
+      startDate ||
+      endDate ||
+      fxRiskFilter !== null ||
+      sobRiskFilter !== null ||
+      creditoRiskFilter !== null ||
+      tasaRiskFilter !== null ||
+      equityRiskFilter !== null
+    )) {
+      setFilterStatus('todos');
+      setActionStateFilter('todos');
+      setStartDate(null);
+      setEndDate(null);
+      setFxRiskFilter(null);
+      setSobRiskFilter(null);
+      setCreditoRiskFilter(null);
+      setTasaRiskFilter(null);
+      setEquityRiskFilter(null);
+    }
+
+    setIsSearching(true);
   };
 
   // Función para manejar el evento de Enter en el buscador
@@ -466,37 +768,35 @@ const ClientsDashboard: React.FC = () => {
 
   // Función para manejar el cambio de página
   const handlePageChange = (page: number) => {
-    // Quitar esta línea: setSearchTerm('');
     setCurrentPage(page);
 
     // Si hay un término de búsqueda activo, realizar la búsqueda con la nueva página
     if (debouncedSearchTerm) {
       handleServerSearch();
+      setFilterStatus('todos');
+      setActionStateFilter('todos');
+      setStartDate(null);
+      setEndDate(null);
+      setFxRiskFilter(null);
+      setSobRiskFilter(null);
+      setCreditoRiskFilter(null);
+      setTasaRiskFilter(null);
+      setEquityRiskFilter(null);
     }
-  };
-
-  // Función para manejar la selección de filtro de estado
-  const handleFilterStatusSelect = (selected: string) => {
-    setFilterStatus(selected as 'todos' | 'activos' | 'inactivos');
-    setCurrentPage(1);
-  };
-
-  // Función para manejar la selección de filtro de riesgo
-  const handleFilterRiskSelect = (selected: string) => {
-    setFilterRisk(selected === 'null' ? null : selected);
-    setCurrentPage(1);
   };
 
   // Se agrega el botón "Ver" para cada fila que redirige al detalle del cliente
   const clientsWithActions = clients.map(client => ({
     ...client,
     acciones: (
-      <Button
-        variant="outlined"
+      <IconButton
+        size="small"
         onClick={() => navigate(`/crm/clients/details/${client.Numero}`)}
+        title="Ver detalles"
+        sx={{ color: '#0094FF', padding: '4px' }}
       >
-        Ver
-      </Button>
+        <img src="/edit.png" alt="Editar" style={{ width: '22px', height: '22px' }} />
+      </IconButton>
     )
   }));
 
@@ -524,10 +824,17 @@ const ClientsDashboard: React.FC = () => {
               </Typography>
               <div className={styles.inputDropdownMenuItemParent}>
                 <FilterDropdown
-                  options={statusFilterOptions}
-                  onFilterSelect={handleFilterStatusSelect}
-                  buttonText="Estado"
-                  width="150px"
+                  options={filterNestedOptions}
+                  onFilterSelect={handleNestedFilterSelect}
+                  buttonText="Filtrar por"
+                  width="200px"
+                  key={`filter-dropdown-${filterStatus}-${actionStateFilter}`}
+                />
+                <ImprovedDateRangePicker
+                  onDateRangeChange={handleDateRangeChange}
+                  buttonLabel="Filtrar por fecha"
+                  initialStartDate={startDate}
+                  initialEndDate={endDate}
                 />
                 <TextField
                   className={styles.search}
@@ -573,6 +880,13 @@ const ClientsDashboard: React.FC = () => {
                 <Typography className={styles.contactosActivos} variant="h2" component="h2">
                   Lista de Clientes
                 </Typography>
+
+                {/* Componente de Filtros Activos (versión limpia, sin título ni fondo) */}
+                <ActiveFilterChips
+                  filters={buildActiveFilters()}
+                  onRemoveFilter={handleRemoveFilter}
+                />
+
                 {error && <div className={styles.errorMessage}>{error}</div>}
                 {isLoading ? (
                   <div className={styles.loadingIndicator}>Cargando...</div>
@@ -584,6 +898,7 @@ const ClientsDashboard: React.FC = () => {
                 )}
               </div>
             </div>
+
           </div>
         </section>
 

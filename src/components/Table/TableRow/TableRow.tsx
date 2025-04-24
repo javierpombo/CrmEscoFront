@@ -22,7 +22,7 @@ const TableRow: React.FC<TableRowProps> = ({ rowData }) => {
         <div className={styles.avatar}>
           <img 
             className={styles.avatarIcon} 
-            src="/avatar-1.svg" 
+            src="/avatar.png" 
             alt={rowData.nombre} 
           />
           {rowData.nombre}

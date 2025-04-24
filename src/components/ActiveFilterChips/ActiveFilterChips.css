@@ -1,0 +1,160 @@
+/* Contenedor principal de filtros, sin fondo y sin sombras */
+.clean-filters-container {
+    display: flex;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  /* Contenedor de chips */
+  .clean-filters-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  /* Estilo base para cada chip de filtro */
+  .clean-filter-chip {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+    height: 24px;
+    transition: all 0.15s ease;
+  }
+  
+  /* Etiqueta dentro del chip */
+  .clean-filter-chip-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+  
+  /* Botón para eliminar filtro */
+  .clean-filter-chip-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 4px;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+  }
+  
+  .clean-filter-chip-remove:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+  
+  .clean-filter-chip-remove:focus {
+    outline: none;
+  }
+  
+  /* Paleta básica con tus colores originales */
+  .clean-filter-chip-blue {
+    background-color: rgba(8, 133, 230, 0.1);
+    color: #0885e6;
+  }
+  
+  .clean-filter-chip-orange {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #FF9800;
+  }
+  
+  .clean-filter-chip-red {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #F44336;
+  }
+  
+  .clean-filter-chip-green {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+  }
+  
+  /* Paleta extendida de colores con la misma opacidad 0.1 */
+  .clean-filter-chip-purple {
+    background-color: rgba(156, 39, 176, 0.1);
+    color: #9C27B0;
+  }
+  
+  .clean-filter-chip-indigo {
+    background-color: rgba(63, 81, 181, 0.1);
+    color: #3F51B5;
+  }
+  
+  .clean-filter-chip-teal {
+    background-color: rgba(0, 150, 136, 0.1);
+    color: #009688;
+  }
+  
+  .clean-filter-chip-cyan {
+    background-color: rgba(0, 188, 212, 0.1);
+    color: #00BCD4;
+  }
+  
+  .clean-filter-chip-pink {
+    background-color: rgba(233, 30, 99, 0.1);
+    color: #E91E63;
+  }
+  
+  .clean-filter-chip-amber {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #FFC107;
+  }
+  
+  .clean-filter-chip-deeporange {
+    background-color: rgba(255, 87, 34, 0.1);
+    color: #FF5722;
+  }
+  
+  .clean-filter-chip-brown {
+    background-color: rgba(121, 85, 72, 0.1);
+    color: #795548;
+  }
+  
+  .clean-filter-chip-deeppurple {
+    background-color: rgba(103, 58, 183, 0.1);
+    color: #673AB7;
+  }
+  
+  .clean-filter-chip-lightblue {
+    background-color: rgba(3, 169, 244, 0.1);
+    color: #03A9F4;
+  }
+  
+  .clean-filter-chip-lightgreen {
+    background-color: rgba(139, 195, 74, 0.1);
+    color: #8BC34A;
+  }
+  
+  .clean-filter-chip-lime {
+    background-color: rgba(205, 220, 57, 0.1);
+    color: #CDDC39;
+  }
+  
+  .clean-filter-chip-yellow {
+    background-color: rgba(255, 235, 59, 0.1);
+    color: #FFEB3B;
+  }
+  
+  .clean-filter-chip-gray {
+    background-color: rgba(158, 158, 158, 0.1);
+    color: #9E9E9E;
+  }
+  
+  /* Media query para dispositivos móviles */
+  @media (max-width: 600px) {
+    .clean-filter-chip {
+      font-size: 0.7rem;
+      padding: 1px 6px;
+    }
+    
+    .clean-filter-chip-label {
+      max-width: 120px;
+    }
+  }

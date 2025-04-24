@@ -193,6 +193,21 @@
     color: #9E9E9E;
 }
 
+.colorPendingVencido {
+    background-color: rgba(106, 27, 154, 0.1);
+    color: #723597;
+  }
+  
+  .colorPendingAbierto {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #FF9800;
+  }
+  
+  .colorPendingCerrado {
+    background-color: rgba(2, 192, 170, 0.1);
+    color: #03ad9a;
+  }
+
 /*******************************
  * FILTROS ACTIVOS (CHIPS)
  *******************************/
@@ -284,7 +299,7 @@
 /* Estilos para la fila de cliente */
 .clientRow {
     background-color: #f5f5f5 !important;
-  }
+}
 
 /*******************************
  * FOOTER Y PAGINACIÓN
@@ -356,7 +371,7 @@
 
 .clientRow {
     background-color: #97979754 !important; /* Fondo gris claro para filas de clientes */
-  }
+}
 
 /* Responsive */
 @media screen and (max-width: 750px) {

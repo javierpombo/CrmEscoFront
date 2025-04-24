@@ -166,12 +166,21 @@ export async function testApiConnection() {
 
 // Servicio principal para Prospectos
 export const prospectoService = {
-  // Obtener lista de prospectos con paginación
+  // Obtener lista de prospectos con paginación y filtros adicionales
   async getProspectos(
     page = 1,
     filterStatus: string = 'todos',
     sortField: string | null = null,
-    sortDirection: 'ascending' | 'descending' | null = null
+    sortDirection: 'ascending' | 'descending' | null = null,
+    additionalFilters: {
+      official_id?: string | null,
+      referent_id?: string | null,
+      action_state?: string | null,
+      is_client?: boolean | null,
+      start_date?: string | null,
+      end_date?: string | null,
+      search_term?: string | null
+    } = {}
   ): Promise<{
     data: Prospecto[];
     pagination: {
@@ -189,6 +198,37 @@ export const prospectoService = {
         // Convertir ascending/descending a asc/desc para la API
         const direction = sortDirection === 'ascending' ? 'asc' : 'desc';
         url += `&sort_by=${sortField}&sort_dir=${direction}`;
+      }
+
+      // Agregar filtros adicionales a la URL
+      if (additionalFilters.official_id) {
+        url += `&official_id=${additionalFilters.official_id}`;
+      }
+      
+      if (additionalFilters.referent_id) {
+        url += `&referent_id=${additionalFilters.referent_id}`;
+      }
+      
+      if (additionalFilters.action_state) {
+        url += `&action_state=${additionalFilters.action_state}`;
+      }
+      
+      if (additionalFilters.is_client !== null) {
+        url += `&is_client=${additionalFilters.is_client ? 1 : 0}`;
+      }
+
+      // Añadir filtros de fecha
+      if (additionalFilters.start_date) {
+        url += `&start_date=${additionalFilters.start_date}`;
+      }
+
+      if (additionalFilters.end_date) {
+        url += `&end_date=${additionalFilters.end_date}`;
+      }
+
+      // Añadir término de búsqueda
+      if (additionalFilters.search_term) {
+        url += `&term=${encodeURIComponent(additionalFilters.search_term)}`;
       }
 
       console.log(`Realizando petición GET a ${url}`);
@@ -230,59 +270,7 @@ export const prospectoService = {
       return null;
     }
   },
-
-  async searchProspectos(
-    searchTerm: string,
-    page = 1,
-    filterStatus: string = 'todos',
-    sortField: string | null = null,
-    sortDirection: 'ascending' | 'descending' | null = null
-  ): Promise<{
-    data: Prospecto[];
-    pagination: {
-      currentPage: number;
-      lastPage: number;
-      total: number;
-    };
-  }> {
-    try {
-      // Construir URL base
-      let url = `${API_BASE_URL}/prospects/search?term=${encodeURIComponent(searchTerm)}&page=${page}&status=${filterStatus}`;
-
-      // Agregar parámetros de ordenamiento
-      if (sortField && sortDirection) {
-        const direction = sortDirection === 'ascending' ? 'asc' : 'desc';
-        url += `&sort_by=${sortField}&sort_dir=${direction}`;
-      }
-
-      console.log(`Realizando búsqueda en ${url}`);
-
-      const response = await axios.get<PaginatedResponse<BackendProspect>>(url);
-      console.log('Resultados de búsqueda recibidos:', response.data);
-
-      const prospectos = response.data.data.map(mapBackendProspectToFrontend);
-      const pagination = {
-        currentPage: response.data.current_page,
-        lastPage: response.data.last_page,
-        total: response.data.total
-      };
-
-      return {
-        data: prospectos,
-        pagination
-      };
-    } catch (error) {
-      console.error('Error al buscar prospectos:', error);
-      return {
-        data: [],
-        pagination: {
-          currentPage: 1,
-          lastPage: 1,
-          total: 0
-        }
-      };
-    }
-  },
+  
 
   // Crear un nuevo prospecto
   async createProspecto(data: Omit<Prospecto, 'id'>): Promise<Prospecto | null> {
@@ -400,7 +388,17 @@ export async function getClients(
   sortField: string | null = null,
   sortDirection: 'ascending' | 'descending' | null = null,
   riskFilter: string | null = null,
-  riskParams: { fx?: number; sob?: number; credito?: number; tasa?: number; equity?: number; search_term?: string } = {}
+  riskParams: { 
+    fx?: number; 
+    sob?: number; 
+    credito?: number; 
+    tasa?: number; 
+    equity?: number; 
+    search_term?: string;
+    action_state?: 'todos' | 'vencido' | 'cerrado' | 'abierto';
+    start_date?: string;
+    end_date?: string;
+  } = {}
 ) {
   try {
     // Construir la URL base usando URLSearchParams
@@ -429,6 +427,20 @@ export async function getClients(
       params.append('equity', riskParams.equity.toString());
     }
 
+    // Añadir filtro de estado de acción si está presente y no es 'todos'
+    if (riskParams.action_state && riskParams.action_state !== 'todos') {
+      params.append('action_state', riskParams.action_state);
+    }
+
+    // Añadir filtros de rango de fechas si están presentes
+    if (riskParams.start_date) {
+      params.append('start_date', riskParams.start_date);
+    }
+    if (riskParams.end_date) {
+      params.append('end_date', riskParams.end_date);
+    }
+
+    // Añadir término de búsqueda si está presente
     if (riskParams.search_term) {
       params.append('search_term', riskParams.search_term);
     }
@@ -474,6 +486,7 @@ export async function getClients(
       // Procesar acciones y encontrar la próxima fecha de vencimiento
       const actions = item.actions || [];
       let fechaVencimiento = null;
+      let estadoAccion = ''; 
 
       if (actions.length > 0) {
         // Encontrar la acción con la fecha de próximo contacto más próxima
@@ -486,7 +499,20 @@ export async function getClients(
           });
 
         if (pendingActions.length > 0) {
-          fechaVencimiento = pendingActions[0].next_contact;
+          const nextAction = pendingActions[0];
+          fechaVencimiento = nextAction.next_contact;
+          
+          // Determinar el estado de la acción
+          const now = new Date();
+          const actionDate = new Date(nextAction.next_contact);
+          
+          if (nextAction.is_closed) {
+            estadoAccion = 'cerrado';
+          } else if (actionDate < now) {
+            estadoAccion = 'vencido';
+          } else {
+            estadoAccion = 'abierto';
+          }
         }
       }
 
@@ -505,6 +531,7 @@ export async function getClients(
         cuit: item.CUIT || '-',
         mail: item.EMail || '-',
         activo: item.EstaAnulado === "0",
+        estadoAccion: estadoAccion, // Añadir estado de la acción
         risks: formattedRisks,
         fechaVencimiento: fechaVencimiento,
       };
