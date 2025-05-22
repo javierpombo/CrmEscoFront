@@ -2,5 +2,6 @@
 const apiBaseUrl = window._env_?.API_BASE_URL || 'http://localhost/api';
 const datascopeUrl = window._env_?.DATASCOPE_URL || '';
 
-export const API_BASE_URL = apiBaseUrl;
+// Ensure API base URL ends with a trailing slash
+export const API_BASE_URL = apiBaseUrl.endsWith('/') ? apiBaseUrl : `${apiBaseUrl}/`;
 export const DATASCOPE_URL = datascopeUrl;
