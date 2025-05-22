@@ -1,4 +1,3 @@
-
 services:
   front:
     image: ${IMAGEN_FRONT}
@@ -6,6 +5,9 @@ services:
     ports:
       - "${PORT_FRONT}:443"
       - "${PORT_FRONT_ALTERNATIVO}:80"
+    environment:
+      - API_BASE_URL=http://backend/api
+      - DATASCOPE_URL=${DATASCOPE_URL}
     env_file:
       - .env
     networks:
