@@ -1,17 +1,6 @@
 import { User } from './User';
-
-/**
- * Tipo para acciones relacionadas a un prospecto
- */
-export interface AccionType {
-  id?: number | string;
-  prospect_id?: number | string;
-  action_date: string | null;
-  description: string | null;
-  next_contact: string | null;
-  user_id: string;
-  status?: string; 
-}
+import { Stage, StageProgress } from './Stage';
+import { Action } from './Action';
 
 export interface Prospecto {
   id?: string;
@@ -31,16 +20,12 @@ export interface Prospecto {
   activo: string;
   notas: string;
   sector_industria: string;
-  actions?: AccionType[];
+  // New fields for stages and actions
+  currentStage?: Stage;
+  stageProgress: StageProgress[];
+  actions: Action[];
   [key: string]: any;
 }
 
-/**
- * Tipo para creación de prospectos (sin ID)
- */
 export type ProspectoNuevo = Omit<Prospecto, 'id'>;
-
-/**
- * Tipo para actualización parcial de prospectos
- */
 export type ProspectoActualizacion = Partial<Prospecto>;
